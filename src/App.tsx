@@ -3,10 +3,16 @@ import { COLUMNS, uid, type ActionItem, type Board, type Card, type ColumnId } f
 import { deleteBoard, listBoards, requestPersistence, saveBoard } from './lib/db'
 import { LONG_LINK, downloadFile, readFile, readShare, shareUrl } from './lib/share'
 import { toMarkdown } from './lib/markdown'
+import { sampleBoard } from './lib/sample'
 
 // Remove the board from the address bar as soon as it's read, so other scripts,
 // extensions and bookmarks of this page don't keep a copy of it.
 const clearHash = () => history.replaceState(null, '', location.pathname + location.search)
+
+// Read once at start-up: ?demo (the link shared on LinkedIn) opens a sample
+// board for first-time visitors.
+let DEMO = new URLSearchParams(location.search).has('demo')
+if (DEMO) history.replaceState(null, '', location.pathname + location.hash)
 
 const newBoard = (title = 'Sprint retro'): Board => {
   const now = Date.now()
@@ -25,6 +31,15 @@ export default function App() {
 
   useEffect(() => {
     listBoards().then(list => {
+      if (DEMO && list.length === 0) {
+        DEMO = false
+        const sample = sampleBoard()
+        saveBoard(sample)
+        setBoards(bs => (bs.length ? bs : [sample]))
+        setActiveId(id => id ?? sample.id)
+        setToast('This is a sample board. Play around: everything stays in your browser.')
+        return
+      }
       setBoards(list)
       setActiveId(list[0]?.id)
     })
@@ -183,7 +198,7 @@ export default function App() {
             onDelete={() => remove(active.id)}
           />
         ) : (
-          <Empty onCreate={() => create()} />
+          <Empty onCreate={() => create()} onSample={() => create(sampleBoard())} />
         )}
       </main>
 
@@ -192,12 +207,15 @@ export default function App() {
   )
 }
 
-function Empty({ onCreate }: { onCreate: () => void }) {
+function Empty({ onCreate, onSample }: { onCreate: () => void; onSample: () => void }) {
   return (
     <section className="empty">
       <h1>Run your sprint retro in the browser</h1>
       <p>Boards are saved on your device in IndexedDB, work offline, and travel inside a share link. No sign-up, no server, no database.</p>
-      <button className="primary" onClick={onCreate}>Start a retro</button>
+      <div className="row center">
+        <button className="primary" onClick={onCreate}>Start a retro</button>
+        <button onClick={onSample}>Try a sample board</button>
+      </div>
     </section>
   )
 }
