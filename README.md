@@ -31,4 +31,4 @@ Pushing to `main` deploys to GitHub Pages through `.github/workflows/deploy.yml`
 
 ## Credits
 
-The no-backend approach was inspired by [FuseLLM](https://github.com/shrinathprabhu/fusellm) by Shrinath Prabhu.
+The share-link and strict-CSP approach was inspired by [FuseLLM](https://github.com/shrinathprabhu/fusellm) by Shrinath Prabhu.
