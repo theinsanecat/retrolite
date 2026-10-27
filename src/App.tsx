@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react'
 import { COLUMNS, uid, type ActionItem, type Board, type Card, type ColumnId } from './types'
 import { deleteBoard, listBoards, requestPersistence, saveBoard } from './lib/db'
-import { readShare, shareUrl } from './lib/share'
+import { LONG_LINK, downloadFile, readFile, readShare, shareUrl } from './lib/share'
 import { toMarkdown } from './lib/markdown'
+
+// Remove the board from the address bar as soon as it's read, so other scripts,
+// extensions and bookmarks of this page don't keep a copy of it.
+const clearHash = () => history.replaceState(null, '', location.pathname + location.search)
 
 const newBoard = (title = 'Sprint retro'): Board => {
   const now = Date.now()
@@ -12,7 +16,8 @@ const newBoard = (title = 'Sprint retro'): Board => {
 export default function App() {
   const [boards, setBoards] = useState<Board[]>([])
   const [activeId, setActiveId] = useState<string>()
-  const [incoming, setIncoming] = useState<Board>()
+  const [incoming, setIncoming] = useState<{ board: Board; from: 'link' | 'file' }>()
+  const [sharing, setSharing] = useState<Board>()
   const [error, setError] = useState<string>()
   const [toast, setToast] = useState<string>()
   const [online, setOnline] = useState(navigator.onLine)
@@ -24,7 +29,9 @@ export default function App() {
       setActiveId(list[0]?.id)
     })
     requestPersistence().then(setPersisted)
-    readShare().then(setIncoming).catch(e => setError(e.message))
+    const hash = location.hash
+    if (hash.includes('share=')) clearHash()
+    readShare(hash).then(board => board && setIncoming({ board, from: 'link' })).catch(e => setError(e.message))
     const on = () => setOnline(navigator.onLine)
     addEventListener('online', on)
     addEventListener('offline', on)
@@ -33,7 +40,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(undefined), 2200)
+    const t = setTimeout(() => setToast(undefined), toast.length > 60 ? 6000 : 2400)
     return () => clearTimeout(t)
   }, [toast])
 
@@ -58,22 +65,37 @@ export default function App() {
     setActiveId(rest[0]?.id)
   }
 
-  const clearHash = () => history.replaceState(null, '', location.pathname + location.search)
-
   const acceptIncoming = () => {
-    if (incoming) create(incoming)
+    if (incoming) create(incoming.board)
     setIncoming(undefined)
-    clearHash()
     setToast('Saved a copy to this device')
   }
 
-  const share = async (board: Board) => {
+  const copyLink = async (board: Board) => {
+    setSharing(undefined)
     const url = await shareUrl(board)
     try {
       await navigator.clipboard.writeText(url)
-      setToast(`Link copied (${url.length.toLocaleString()} characters)`)
+      setToast(url.length > LONG_LINK
+        ? `Link copied, but it's long (${url.length.toLocaleString()} characters). Some chat apps cut long links; if it doesn't open, send the board file instead.`
+        : `Link copied (${url.length.toLocaleString()} characters)`)
     } catch {
       prompt('Copy this link', url)
+    }
+  }
+
+  const download = (board: Board) => {
+    setSharing(undefined)
+    downloadFile(board)
+    setToast('Board file downloaded')
+  }
+
+  const importFile = async (file?: File) => {
+    if (!file) return
+    try {
+      setIncoming({ board: await readFile(file), from: 'file' })
+    } catch (e) {
+      setError((e as Error).message)
     }
   }
 
@@ -93,6 +115,10 @@ export default function App() {
           </div>
         </div>
         <button className="primary wide" onClick={() => create()}>+ New board</button>
+        <label className="button wide">
+          Import board file
+          <input type="file" accept=".json,application/json" className="sr-only" onChange={e => { importFile(e.target.files?.[0]); e.target.value = '' }} />
+        </label>
         <nav aria-label="Boards">
           {boards.map(b => (
             <button
@@ -116,18 +142,32 @@ export default function App() {
         {error && (
           <div className="banner error" role="alert">
             {error}
-            <button className="ghost" onClick={() => { setError(undefined); clearHash() }}>Dismiss</button>
+            <button className="ghost" onClick={() => setError(undefined)}>Dismiss</button>
           </div>
         )}
         {incoming && (
           <div className="banner" role="status">
             <div>
-              <strong>Someone shared “{incoming.title}” with you.</strong>
-              <span className="muted"> {incoming.cards.length} card{incoming.cards.length === 1 ? '' : 's'}, {incoming.actions.length} action item{incoming.actions.length === 1 ? '' : 's'}. It came inside the link; no server saw it.</span>
+              <strong>{incoming.from === 'link' ? `Someone shared “${incoming.board.title}” with you.` : `Import “${incoming.board.title}”?`}</strong>
+              <span className="muted"> {incoming.board.cards.length} card{incoming.board.cards.length === 1 ? '' : 's'}, {incoming.board.actions.length} action item{incoming.board.actions.length === 1 ? '' : 's'}.{incoming.from === 'link' ? ' It came inside the link; no server saw it.' : ''}</span>
             </div>
             <div className="row">
               <button className="primary" onClick={acceptIncoming}>Save a copy</button>
-              <button className="ghost" onClick={() => { setIncoming(undefined); clearHash() }}>Ignore</button>
+              <button className="ghost" onClick={() => setIncoming(undefined)}>Ignore</button>
+            </div>
+          </div>
+        )}
+
+        {sharing && (
+          <div className="banner" role="dialog" aria-label="Share this board">
+            <div>
+              <strong>Anyone with this link can read the whole board.</strong>
+              <span className="muted"> The link can also stay in their browser history, so leave out anything confidential.</span>
+            </div>
+            <div className="row">
+              <button className="primary" onClick={() => copyLink(sharing)}>Copy link</button>
+              <button onClick={() => download(sharing)}>Download file instead</button>
+              <button className="ghost" onClick={() => setSharing(undefined)}>Cancel</button>
             </div>
           </div>
         )}
@@ -137,7 +177,8 @@ export default function App() {
             key={active.id}
             board={active}
             onChange={update}
-            onShare={() => share(active)}
+            onShare={() => setSharing(active)}
+            onDownload={() => download(active)}
             onNotes={() => copyNotes(active)}
             onDelete={() => remove(active.id)}
           />
@@ -165,11 +206,12 @@ interface BoardProps {
   board: Board
   onChange: (b: Board) => void
   onShare: () => void
+  onDownload: () => void
   onNotes: () => void
   onDelete: () => void
 }
 
-function BoardView({ board, onChange, onShare, onNotes, onDelete }: BoardProps) {
+function BoardView({ board, onChange, onShare, onDownload, onNotes, onDelete }: BoardProps) {
   const setCards = (cards: Card[]) => onChange({ ...board, cards })
   const setActions = (actions: ActionItem[]) => onChange({ ...board, actions })
 
@@ -185,6 +227,7 @@ function BoardView({ board, onChange, onShare, onNotes, onDelete }: BoardProps) 
         <div className="row">
           <button onClick={onShare} title="Copy a link that carries this whole board">Share link</button>
           <button onClick={onNotes} title="Copy meeting notes as Markdown">Copy notes</button>
+          <button onClick={onDownload} title="Save this board as a file: a backup, or for boards too big for a link">Download</button>
           <button className="ghost danger" onClick={onDelete}>Delete</button>
         </div>
       </header>
