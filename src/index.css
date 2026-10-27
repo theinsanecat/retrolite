@@ -64,6 +64,7 @@ input, textarea {
 
 .muted { color: var(--muted); font-size: 14px; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row.center { justify-content: center; }
 .count { color: var(--muted); font-weight: 500; font-size: 13px; margin-left: 4px; }
 
 .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
