@@ -2,7 +2,7 @@
 
 **Sprint retros that run entirely in your browser.** No sign-up, no server, no database.
 
-Add what went well, what to improve and ideas, dot-vote the cards, agree action items with an owner and a date, then copy the meeting notes as Markdown. Share the whole board with your team as a single link.
+Add what went well, what to improve and ideas, dot-vote the cards, agree action items with an owner and a date, then copy the meeting notes as Markdown. Share the whole board with your team as a single link, or as a small file.
 
 ## How it works without a backend
 
@@ -14,6 +14,13 @@ Add what went well, what to improve and ideas, dot-vote the cards, agree action 
 | Work offline | — | A **service worker** caches the app, so it opens with no internet |
 
 Sharing uses the browser's built-in `CompressionStream`, so there are no extra dependencies: just React and Vite.
+
+## Good to know
+
+- **Anyone with a share link can read the board**, and links can stay in browser history. Retrolite says so before you share.
+- **The link is removed from the address bar** as soon as the board is read, so other scripts, extensions or bookmarks of the page don't keep a copy.
+- **Long links can break** in some chat apps. Past 2,000 characters Retrolite warns you; use **Download** and **Import board file** instead.
+- **Browsers can clear site data.** Persistent storage is requested, and Safari may still clear data for sites you don't visit for a while, so download important boards as a backup or install the app.
 
 ## Stack
 
