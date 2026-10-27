@@ -49,7 +49,10 @@ button.ghost { background: transparent; border-color: transparent; }
 button.ghost:hover { background: var(--accent-soft); }
 button.danger { color: var(--danger); }
 button.small { padding: 2px 8px; font-size: 13px; }
-button.wide { width: 100%; }
+button.wide, .button.wide { width: 100%; }
+.button { display: inline-block; text-align: center; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 7px 12px; cursor: pointer; }
+.button:hover { border-color: var(--accent); }
+.button:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 input, textarea {
   width: 100%;
@@ -132,6 +135,7 @@ main { padding: 24px 28px 60px; min-width: 0; }
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 14px;
+  max-width: min(560px, calc(100vw - 32px)); text-align: center;
 }
 
 @media (max-width: 860px) {
@@ -144,3 +148,4 @@ main { padding: 24px 28px 60px; min-width: 0; }
   .action { flex-wrap: wrap; }
   .action-text { flex-basis: calc(100% - 40px); }
 }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
