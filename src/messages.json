@@ -1,5 +1,5 @@
 {
-  "board.sample": {"type": "info", "text": "This is a sample board. Play around: everything stays in your browser."},
+  "board.sample": {"type": "info", "text": "These are sample boards. Play around, or delete them: everything stays in your browser."},
   "board.renamed": {"type": "warning", "text": "Another board already had that name, so this one is now “{title}”."},
   "board.saved": {"type": "success", "text": "Saved a copy to this device."},
   "board.savedAs": {"type": "success", "text": "Saved a copy as “{title}”, because that name was taken."},
