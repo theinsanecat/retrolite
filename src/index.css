@@ -5,6 +5,8 @@
    sidebar, which sets data-theme on <html>.
    ============================================================ */
 :root {
+  /* Shared height of the sidebar brand and every page header (desktop) */
+  --head-h: 84px;
   color-scheme: light dark;
   --bg: light-dark(#f7f5fb, #14111d);
   --panel: light-dark(#ffffff, #1e1a2b);
@@ -212,7 +214,7 @@ input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); 
 }
 .side-section { padding: 14px; border-bottom: 1px solid var(--line); }
 .side-section:last-child { border-bottom: none; }
-.side-brand { display: flex; gap: 10px; align-items: center; padding: 18px 14px; }
+.side-brand { display: flex; gap: 10px; align-items: center; padding: 0 14px; height: var(--head-h); flex: none; }
 .side-brand .logo { display: inline-flex; color: var(--accent); }
 .side-brand strong { display: block; }
 .side-brand small { color: var(--text-2); }
@@ -253,6 +255,21 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; heigh
 .main-banners .banner { margin-bottom: 12px; }
 .page { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .page-head { flex: none; margin: 0; padding: 18px 28px 14px; background: var(--bg); border-bottom: 1px solid var(--line); }
+/* On desktop every page header is exactly as tall as the sidebar's brand
+   section, so their bottom borders form one continuous line. */
+@media (min-width: 861px) {
+  .page-head { height: var(--head-h); padding-top: 0; padding-bottom: 0; display: flex; align-items: center; flex-wrap: nowrap; }
+  .page-head > div:first-child { min-width: 0; }
+  .page-head p { margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .page-head .select-wrap, .page-head > :last-child { flex: none; }
+}
+/* Narrow desktop: header buttons show only their icons (the name stays for
+   screen readers, and the tooltip says what each one does) so the title has room. */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .page-head .label-wide { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .page-head .btn:has(.label-wide) { padding-inline: 10px; gap: 0; }
+  .page-head .title-wrap { flex: 1; min-width: 0; }
+}
 .page-head h1 { margin: 0; }
 .page-body { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 28px 60px; }
 .page-body > :first-child { margin-top: 0; }
@@ -280,6 +297,7 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; heigh
 .template.chosen { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
 .template:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
 .template input { position: absolute; opacity: 0; pointer-events: none; }
+.template-blurb { font-size: 13px; line-height: 1.4; }
 .mini-cols { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .mini-cols i { font-style: normal; font-size: 12px; padding: 2px 8px; border-radius: 999px; border-top: 3px solid var(--c); background: var(--bg); }
 .open-actions .actions { margin-top: 16px; }
