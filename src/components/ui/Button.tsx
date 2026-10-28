@@ -1,13 +1,16 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Icon, type IconName } from './Icon'
 import { Tooltip } from './Tooltip'
 import type { Side } from './popover'
 
 /*
  * One button, three levels of emphasis:
- * - primary:   the main action on a screen (filled). One per area.
- * - secondary: other actions (outlined).
- * - tertiary:  low-emphasis actions and icon buttons (text only).
- * `danger` colours any of them for destructive actions. Icon-only buttons
+ * - primary:   actions (filled).
+ * - secondary: outlined, for Cancel/Delete next to primary actions.
+ * - tertiary:  text only, for low-emphasis buttons and icon buttons.
+ * Conventions: actions are primary; Cancel and Delete are secondary or
+ * tertiary. `danger` colours any variant for destructive actions.
+ * `icon` puts an SVG icon before the text. Icon-only buttons (`iconOnly`)
  * must pass `label`, which becomes both the accessible name and the tooltip.
  */
 
@@ -17,22 +20,24 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
   size?: 'md' | 'sm'
   danger?: boolean
-  icon?: boolean
+  icon?: IconName
+  iconOnly?: boolean
   label?: string
   tip?: string
   tipSide?: Side
-  children: ReactNode
+  children?: ReactNode
 }
 
-export const btnClass = (variant: Variant = 'secondary', { size = 'md', danger = false, icon = false, extra = '' } = {}) =>
-  ['btn', `btn-${variant}`, size === 'sm' && 'btn-sm', danger && 'btn-danger', icon && 'btn-icon', extra].filter(Boolean).join(' ')
+export const btnClass = (variant: Variant = 'secondary', { size = 'md', danger = false, iconOnly = false, extra = '' } = {}) =>
+  ['btn', `btn-${variant}`, size === 'sm' && 'btn-sm', danger && 'btn-danger', iconOnly && 'btn-icon', extra].filter(Boolean).join(' ')
 
-export function Button({ variant = 'secondary', size = 'md', danger, icon, label, tip, tipSide, className, type = 'button', children, ...rest }: Props) {
+export function Button({ variant = 'secondary', size = 'md', danger, icon, iconOnly, label, tip, tipSide, className, type = 'button', children, ...rest }: Props) {
   const button = (
-    <button {...rest} type={type} aria-label={label ?? rest['aria-label']} className={btnClass(variant, { size, danger, icon, extra: className })}>
+    <button {...rest} type={type} aria-label={label ?? rest['aria-label']} className={btnClass(variant, { size, danger, iconOnly, extra: className })}>
+      {icon && <Icon name={icon} size={size === 'sm' ? 14 : 16} />}
       {children}
     </button>
   )
-  const text = tip ?? (icon ? label : undefined)
+  const text = tip ?? (iconOnly ? label : undefined)
   return text ? <Tooltip text={text} side={tipSide}>{button}</Tooltip> : button
 }
