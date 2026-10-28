@@ -1,7 +1,5 @@
-import type { Board, Card, ActionItem } from '../types'
-import { uid, COLUMNS } from '../types'
-
-const COLUMN_IDS: string[] = COLUMNS.map(c => c.id)
+import type { Board, Card, Column } from '../types'
+import { uid, columnsOf, TEMPLATES } from '../types'
 
 /*
  * Share a board as a link. The board is compressed into the URL fragment
@@ -21,12 +19,22 @@ const COLUMN_IDS: string[] = COLUMNS.map(c => c.id)
 
 export const LONG_LINK = 2000
 
+/** Cards point at each other by position in the list, so this device's ids stay behind. */
+interface FileCard {
+  column: string
+  text: string
+  votes: number
+  parent?: number
+  links?: number[]
+}
+
 interface BoardFile {
   app: 'retrolite'
-  v: 1
+  v: 2
   title: string
-  cards: Omit<Card, 'id'>[]
-  actions: Omit<ActionItem, 'id'>[]
+  columns: Column[]
+  cards: FileCard[]
+  actions: { text: string; owner: string; due: string; done: boolean }[]
 }
 
 const toB64url = (bytes: Uint8Array) => {
@@ -42,32 +50,68 @@ async function pipe(bytes: Uint8Array, stream: CompressionStream | Decompression
   return new Uint8Array(await new Response(out).arrayBuffer())
 }
 
-/** What travels in a link or a downloaded file. Ids belong to this device and are left behind. */
+/** What travels in a link or a downloaded file. */
 export function toFile(board: Board): BoardFile {
+  const index = new Map(board.cards.map((c, i) => [c.id, i]))
   return {
     app: 'retrolite',
-    v: 1,
+    v: 2,
     title: board.title,
-    cards: board.cards.map(({ id: _id, ...c }) => c),
-    actions: board.actions.map(({ id: _id, ...a }) => a),
+    columns: columnsOf(board),
+    cards: board.cards.map(c => {
+      const f: FileCard = { column: c.column, text: c.text, votes: c.votes }
+      if (c.parentId && index.has(c.parentId)) f.parent = index.get(c.parentId)
+      const links = (c.links ?? []).filter(id => index.has(id)).map(id => index.get(id)!)
+      if (links.length) f.links = links
+      return f
+    }),
+    actions: board.actions.map(({ text, owner, due, done }) => ({ text, owner, due, done })),
   }
 }
 
-/** A fresh board from a link or file, with new ids. Throws if it isn't a retro board. */
+const str = (v: unknown, max = 2000) => String(v ?? '').slice(0, max)
+
+/** A fresh board from a link or file, with new ids. Reads both file versions. Throws if it isn't a retro board. */
 export function fromFile(file: unknown): Board {
   const f = file as Partial<BoardFile> | null
   if (f?.app !== 'retrolite' || !Array.isArray(f.cards)) throw new Error('This does not hold a Retrolite board.')
+
+  const columns: Column[] = Array.isArray(f.columns) && f.columns.length >= 1 && f.columns.length <= 6
+    ? f.columns.map(c => ({ id: str(c?.id, 40), title: str(c?.title, 60), hint: str(c?.hint, 120) }))
+    : TEMPLATES[0].columns
+  const colIds = new Set(columns.map(c => c.id))
+
+  const raw = f.cards.slice(0, 500)
+  const ids = raw.map(() => uid())
+  const ok = (i: unknown): i is number => Number.isInteger(i) && (i as number) >= 0 && (i as number) < raw.length
+  const cards: Card[] = []
+  raw.forEach((c, i) => {
+    if (!colIds.has(c?.column)) return
+    const card: Card = { id: ids[i], column: c.column, text: str(c.text), votes: Math.max(0, Number(c.votes) || 0) }
+    if (ok(c.parent) && c.parent !== i) card.parentId = ids[c.parent]
+    const links = Array.isArray(c.links) ? c.links.filter(ok).filter(j => j !== i).map(j => ids[j]) : []
+    if (links.length) card.links = links
+    cards.push(card)
+  })
+  // drop references to cards that were filtered out, and keep groups one level deep
+  const present = new Set(cards.map(c => c.id))
+  const byId = new Map(cards.map(c => [c.id, c]))
+  for (const c of cards) {
+    if (c.parentId && (!present.has(c.parentId) || byId.get(c.parentId)!.parentId)) c.parentId = undefined
+    if (c.links) c.links = c.links.filter(id => present.has(id))
+    if (c.links && !c.links.length) c.links = undefined
+  }
+
   const now = Date.now()
   return {
     id: uid(),
-    title: String(f.title || 'Shared retro'),
+    title: str(f.title, 120) || 'Shared retro',
     createdAt: now,
     updatedAt: now,
-    cards: f.cards
-      .filter(c => COLUMN_IDS.includes(c?.column))
-      .map(c => ({ id: uid(), column: c.column, text: String(c.text ?? ''), votes: Number(c.votes) || 0 })),
-    actions: (Array.isArray(f.actions) ? f.actions : []).map(a => ({
-      id: uid(), text: String(a?.text ?? ''), owner: String(a?.owner ?? ''), due: String(a?.due ?? ''), done: !!a?.done,
+    columns,
+    cards,
+    actions: (Array.isArray(f.actions) ? f.actions : []).slice(0, 200).map(a => ({
+      id: uid(), text: str(a?.text), owner: str(a?.owner, 80), due: str(a?.due, 10), done: !!a?.done,
     })),
   }
 }
