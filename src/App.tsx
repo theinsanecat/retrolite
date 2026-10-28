@@ -10,7 +10,9 @@ import { NewBoard } from './components/NewBoard'
 import { OpenActions, openActions } from './components/OpenActions'
 import { today } from './components/Actions'
 import { Button, btnClass } from './components/ui/Button'
+import { Icon } from './components/ui/Icon'
 import { useToast } from './components/ui/Toaster'
+import { ThemeSwitch } from './components/ui/ThemeSwitch'
 
 // Remove the board from the address bar as soon as it's read, so other scripts,
 // extensions and bookmarks of this page don't keep a copy of it.
@@ -177,13 +179,13 @@ export default function App() {
             <small>Sprint retros. No backend.</small>
           </div>
         </div>
-        <Button variant="primary" className="wide" onClick={() => setView('new')}>+ New board</Button>
-        <label className={btnClass('secondary', { extra: 'wide' })}>
-          Import board file
+        <Button variant="primary" className="wide" icon="plus" onClick={() => setView('new')}>New board</Button>
+        <label className={btnClass('primary', { extra: 'wide' })}>
+          <Icon name="upload" />Import board file
           <input type="file" accept=".json,application/json" className="sr-only" onChange={e => { importFile(e.target.files?.[0]); e.target.value = '' }} />
         </label>
         <button className={`board-link open-link ${view === 'actions' ? 'active' : ''}`} onClick={() => setView('actions')}>
-          <span>✓ Open actions <span className="count">{open.length}</span></span>
+          <span className="open-title"><Icon name="check" size={14} />Open actions <span className="count">{open.length}</span></span>
           <small className="text-tertiary">{overdue ? <span className="late-text">{overdue} overdue</span> : 'Across all boards'}</small>
         </button>
         <nav aria-label="Boards">
@@ -198,6 +200,7 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <ThemeSwitch />
         <footer className="status">
           <span className={`dot ${online ? 'on' : 'off'}`} /> {online ? 'Online' : 'Offline — still works'}
           <br />
@@ -209,7 +212,7 @@ export default function App() {
         {error && (
           <div className="banner error" role="alert">
             {error}
-            <Button variant="tertiary" size="sm" onClick={() => setError(undefined)}>Dismiss</Button>
+            <Button variant="secondary" size="sm" icon="x" onClick={() => setError(undefined)}>Dismiss</Button>
           </div>
         )}
         {incoming && (
@@ -219,8 +222,8 @@ export default function App() {
               <span className="text-secondary"> {incoming.board.cards.length} card{incoming.board.cards.length === 1 ? '' : 's'}, {incoming.board.actions.length} action item{incoming.board.actions.length === 1 ? '' : 's'}.{incoming.from === 'link' ? ' It came inside the link; no server saw it.' : ''}</span>
             </div>
             <div className="row">
-              <Button variant="primary" onClick={acceptIncoming}>Save a copy</Button>
-              <Button variant="tertiary" onClick={() => setIncoming(undefined)}>Ignore</Button>
+              <Button variant="primary" icon="download" onClick={acceptIncoming}>Save a copy</Button>
+              <Button variant="secondary" icon="x" onClick={() => setIncoming(undefined)}>Ignore</Button>
             </div>
           </div>
         )}
@@ -232,9 +235,9 @@ export default function App() {
               <span className="text-secondary"> The link can also stay in their browser history, so leave out anything confidential.</span>
             </div>
             <div className="row">
-              <Button variant="primary" onClick={() => copyLink(sharing)}>Copy link</Button>
-              <Button variant="secondary" onClick={() => download(sharing)}>Download file instead</Button>
-              <Button variant="tertiary" onClick={() => setSharing(undefined)}>Cancel</Button>
+              <Button variant="primary" icon="link" onClick={() => copyLink(sharing)}>Copy link</Button>
+              <Button variant="primary" icon="download" onClick={() => download(sharing)}>Download file instead</Button>
+              <Button variant="secondary" icon="x" onClick={() => setSharing(undefined)}>Cancel</Button>
             </div>
           </div>
         )}
@@ -270,8 +273,8 @@ function Empty({ onCreate, onSample }: { onCreate: () => void; onSample: () => v
       <h1>Run your sprint retro in the browser</h1>
       <p>Boards are saved on your device in IndexedDB, work offline, and travel inside a share link. No sign-up, no server, no database.</p>
       <div className="row center">
-        <Button variant="primary" onClick={onCreate}>Start a retro</Button>
-        <Button variant="secondary" onClick={onSample}>Try a sample board</Button>
+        <Button variant="primary" icon="plus" onClick={onCreate}>Start a retro</Button>
+        <Button variant="primary" icon="sparkle" onClick={onSample}>Try a sample board</Button>
       </div>
     </section>
   )
