@@ -1,4 +1,4 @@
-import { cloneElement, useEffect, useId, useRef, useState, type ReactElement } from 'react'
+import { cloneElement, useEffect, useId, useRef, useState, type CSSProperties, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import { useAnchored, type Side } from './popover'
 
@@ -57,7 +57,7 @@ export function Tooltip({ text, side = 'top', children }: Props) {
           id={id}
           role="tooltip"
           className={`tooltip tooltip--${pos?.side ?? side} ${pos ? 'is-placed' : ''}`}
-          style={pos ? { top: pos.top, left: pos.left } : undefined}
+          style={pos ? { top: pos.top, left: pos.left, '--arrow-x': `${pos.arrow}px` } as CSSProperties : undefined}
         >
           {text}
         </div>,
