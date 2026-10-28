@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { msg, type MsgKey, type ToastType, type Vars } from '../../lib/messages'
+import { Icon, type IconName } from './Icon'
 
 /*
  * Toasts confirm that something happened (success, info) or explain why it
@@ -16,7 +17,7 @@ type Notify = (key: MsgKey, vars?: Vars, opts?: { action?: ToastAction }) => voi
 const ToastContext = createContext<Notify>(() => {})
 export const useToast = () => useContext(ToastContext)
 
-const ICON: Record<ToastType, string> = { success: '✓', info: 'i', warning: '!', error: '✕' }
+const ICON: Record<ToastType, IconName> = { success: 'check', info: 'info', warning: 'alert', error: 'x' }
 const TIME: Record<ToastType, number> = { success: 3500, info: 4000, warning: 6000, error: 8000 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -60,14 +61,14 @@ function ToastItem({ toast, dismiss }: { toast: Toast; dismiss: (id: number) => 
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <span className="toast-icon" aria-hidden>{ICON[toast.type]}</span>
+      <span className="toast-icon"><Icon name={ICON[toast.type]} size={14} /></span>
       <span className="toast-text">{toast.text}</span>
       {toast.action && (
         <button type="button" className="btn btn-tertiary btn-sm toast-action" onClick={() => { toast.action!.run(); onDone() }}>
-          {toast.action.label}
+          <Icon name="undo" size={14} />{toast.action.label}
         </button>
       )}
-      <button type="button" className="btn btn-tertiary btn-sm btn-icon toast-close" aria-label="Dismiss" onClick={onDone}>✕</button>
+      <button type="button" className="btn btn-tertiary btn-sm btn-icon toast-close" aria-label="Dismiss" onClick={onDone}><Icon name="x" size={14} /></button>
     </div>
   )
 }
