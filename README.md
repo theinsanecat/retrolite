@@ -2,7 +2,15 @@
 
 **Sprint retros that run entirely in your browser.** No sign-up, no server, no database.
 
-Add what went well, what to improve and ideas, dot-vote the cards, agree action items with an owner and a date, then copy the meeting notes as Markdown. Share the whole board with your team as a single link, or as a small file.
+Pick a retro format, add cards, dot-vote, group and link related cards, and agree action items with an owner and a date. Copy the meeting notes as Markdown, and share the whole board with your team as a single link or a small file.
+
+## Features
+
+- **Retro formats:** Went well / To improve / Ideas, Start / Stop / Continue, Mad / Sad / Glad, and the 4Ls (Liked / Learned / Lacked / Longed for).
+- **Organize cards:** keep a card standalone, group it under another card (one level deep; the parent shows the group's total votes), or link related cards as siblings, even across columns. Drag a card onto another card, or use the ⋯ menu on touch screens and keyboards.
+- **Open actions across boards:** every unfinished action item from every retro in one list, overdue first, filterable by owner.
+- **Unique board names:** a new, imported or renamed board that clashes with an existing name gets a number, like "Sprint retro (2)".
+- **Sample board:** open the app with `?demo` to start on a filled board that explains itself.
 
 ## How it works without a backend
 
