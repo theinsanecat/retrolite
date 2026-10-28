@@ -48,7 +48,13 @@ export default defineConfig({
         start_url: './',
         icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
-      workbox: { globPatterns: ['**/*.{js,css,html,svg}'] },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg}'],
+        // take over as soon as a new version is installed, so returning visitors get updates on their next visit
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+      },
     }),
   ],
 })
