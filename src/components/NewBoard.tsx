@@ -33,8 +33,8 @@ export function NewBoard({ boards, onCreate, onCancel }: {
           ))}
         </fieldset>
         <div className="row">
-          <Button variant="primary" type="submit">Create board</Button>
-          {onCancel && <Button variant="tertiary" onClick={onCancel}>Cancel</Button>}
+          <Button variant="primary" type="submit" icon="plus">Create board</Button>
+          {onCancel && <Button variant="secondary" icon="x" onClick={onCancel}>Cancel</Button>}
         </div>
       </form>
     </section>
