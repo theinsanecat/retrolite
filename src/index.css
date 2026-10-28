@@ -258,8 +258,8 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; heigh
 /* On desktop every page header is exactly as tall as the sidebar's brand
    section, so their bottom borders form one continuous line. */
 @media (min-width: 861px) {
-  .page-head { height: var(--head-h); padding-top: 0; padding-bottom: 0; display: flex; align-items: center; flex-wrap: nowrap; }
-  .page-head > div:first-child { min-width: 0; }
+  .page-head, .board-head.page-head { height: var(--head-h); margin: 0; padding-top: 0; padding-bottom: 0; display: flex; align-items: center; flex-wrap: nowrap; }
+  .page-head > div:first-child { min-width: 0; flex: 1; }
   .page-head p { margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .page-head .select-wrap, .page-head > :last-child { flex: none; }
 }
