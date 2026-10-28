@@ -10,7 +10,8 @@ Pick a retro format, add cards, dot-vote, group and link related cards, and agre
 - **Organize cards:** keep a card standalone, group it under another card (one level deep; the parent shows the group's total votes), or link related cards as siblings, even across columns. Drag a card onto another card, or use the ⋯ menu on touch screens and keyboards.
 - **Card options menu (⋯):** group, ungroup, take out of a group, link and unlink, move to another column, edit, reset votes, delete (with undo). What it offers depends on whether the card is standalone, a group parent or grouped under another card, and the rules for every case live in `src/lib/cards.ts`.
 - **Clear feedback:** every action confirms itself in a toast, and actions that aren't allowed explain why. All the wording lives in `src/messages.json`.
-- **Open actions across boards:** every unfinished action item from every retro in one list, overdue first, filterable by owner.
+- **Open actions across boards:** every unfinished action item from every retro in one list, overdue first, filterable by owner. A chart box shows open actions per owner as a bar chart (overdue and on track) or a pie chart, with a due-date filter; click a bar or slice to filter the list.
+- **Done actions are kept:** finished actions stay in a Done list until you delete them, and Retrolite asks before deleting an action or a board.
 - **Unique board names:** a new, imported or renamed board that clashes with an existing name gets a number, like "Sprint retro (2)".
 - **Light and dark theme:** follows your device by default; switch to Light or Dark at the bottom of the sidebar.
 - **Sample board:** open the app with `?demo` to start on a filled board that explains itself.
@@ -24,7 +25,7 @@ Pick a retro format, add cards, dot-vote, group and link related cards, and agre
 | Stay safe | Server-side checks | A strict **Content Security Policy**: only the site's own scripts, styles and images load, and the page can't connect to any other server |
 | Work offline | — | A **service worker** caches the app, so it opens with no internet |
 
-Sharing uses the browser's built-in `CompressionStream`, so there are no extra dependencies: just React and Vite.
+Sharing uses the browser's built-in `CompressionStream`, so sharing needs no extra dependencies.
 
 ## Good to know
 
@@ -35,11 +36,11 @@ Sharing uses the browser's built-in `CompressionStream`, so there are no extra d
 
 ## UI components
 
-Small, dependency-free components in `src/components/ui`: `Button` (primary, secondary and tertiary variants), `Tooltip`, `Menu`, `Select` (an accessible custom dropdown), `Toaster` and `ThemeSwitch`. Menus and dropdowns work with the keyboard (arrows, Home/End, Enter, Esc, type-ahead).
+Small, dependency-free components in `src/components/ui`: `Button` (primary, secondary and tertiary variants), `Tooltip`, `Menu`, `Select` (an accessible custom dropdown), `Segmented`, `Confirm` (a dialog that asks before deleting), `Toaster`, `ThemeSwitch` and an SVG `Icon` set. Menus and dropdowns work with the keyboard (arrows, Home/End, Enter, Esc, type-ahead).
 
 ## Stack
 
-React 19 · TypeScript · Vite · IndexedDB · CompressionStream · Service worker (vite-plugin-pwa)
+React 19 · TypeScript · Vite · Chart.js (loaded only on the Open actions page) · IndexedDB · CompressionStream · Service worker (vite-plugin-pwa)
 
 ## Run it
 
