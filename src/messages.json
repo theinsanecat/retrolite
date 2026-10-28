@@ -17,6 +17,9 @@
   "action.reopened": {"type": "info", "text": "Reopened “{text}”."},
   "action.needsText": {"type": "warning", "text": "Write what you'll do before adding the action."},
   "action.deleted": {"type": "success", "text": "Action deleted."},
+  "action.kept": {"type": "info", "text": "Kept “{text}”."},
+  "confirm.deleteAction": {"type": "warning", "text": "“{text}” will be removed from “{board}”. Done actions stay in the Done list until you delete them."},
+  "confirm.deleteBoard": {"type": "warning", "text": "“{title}” and its {n} card{s} will be removed from this device. Download it first if you want a copy."},
 
   "card.empty": {"type": "warning", "text": "Write something before adding a card."},
   "card.deleted": {"type": "success", "text": "Card deleted."},
