@@ -28,7 +28,7 @@ export function NewBoard({ boards, onCreate, onCancel }: {
             <label key={t.id} className={`template ${template === t.id ? 'chosen' : ''}`}>
               <input type="radio" name="template" value={t.id} checked={template === t.id} onChange={() => setTemplate(t.id)} />
               <strong>{t.name}</strong>
-              <span className="text-secondary">{t.blurb}</span>
+              <span className="template-blurb text-secondary">{t.blurb}</span>
               <span className="mini-cols">{t.columns.map((c, i) => <i key={c.id} className={`col-${i}`}>{c.title}</i>)}</span>
             </label>
           ))}
