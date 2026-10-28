@@ -47,7 +47,7 @@ export function Tooltip({ text, side = 'top', children }: Props) {
       onPointerEnter={e => e.pointerType === 'mouse' && show()}
       onPointerLeave={hide}
       onPointerDown={hide}
-      onFocus={e => (e.target as HTMLElement).matches(':focus-visible') && show(true)}
+      onFocus={e => document.documentElement.dataset.input !== 'pointer' && (e.target as HTMLElement).matches(':focus-visible') && show(true)}
       onBlur={hide}
     >
       {cloneElement(children, { 'aria-describedby': open ? id : undefined })}
