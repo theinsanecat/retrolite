@@ -199,39 +199,62 @@ export default function App() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="brand">
-          <span className="logo" aria-hidden>◐</span>
+        {/* 1. Brand */}
+        <div className="side-section side-brand">
+          <span className="logo" aria-hidden><Icon name="auto" size={28} /></span>
           <div>
             <strong>Retrolite</strong>
             <small>Sprint retros. No backend.</small>
           </div>
         </div>
-        <Button variant="primary" className="wide" icon="plus" onClick={() => setView('new')}>New board</Button>
-        <label className={btnClass('primary', { extra: 'wide' })}>
-          <Icon name="upload" />Import board file
-          <input type="file" accept=".json,application/json" className="sr-only" onChange={e => { importFile(e.target.files?.[0]); e.target.value = '' }} />
-        </label>
-        <button className={`board-link open-link ${view === 'actions' ? 'active' : ''}`} onClick={() => setView('actions')}>
-          <span className="open-title"><Icon name="check" size={14} />Open actions <span className="count">{open.length}</span></span>
-          <small className="text-tertiary">{overdue ? <span className="late-text">{overdue} overdue</span> : 'Across all boards'}</small>
-        </button>
-        <nav aria-label="Boards">
-          {boards.map(b => (
-            <button
-              key={b.id}
-              className={`board-link ${view === 'board' && b.id === activeId ? 'active' : ''}`}
-              onClick={() => { setActiveId(b.id); setView('board') }}
-            >
-              <span>{b.title || 'Untitled'}</span>
-              <small className="text-tertiary">{b.cards.length} cards · {new Date(b.updatedAt).toLocaleDateString()}</small>
-            </button>
-          ))}
-        </nav>
-        <ThemeSwitch />
-        <footer className="status">
-          <span className={`dot ${online ? 'on' : 'off'}`} /> {online ? 'Online' : 'Offline — still works'}
-          <br />
-          <span className="text-tertiary">{persisted ? 'Saved on this device (persistent)' : 'Saved on this device'}</span>
+
+        {/* 2. Actions */}
+        <div className="side-section side-actions">
+          <Button variant="primary" className="wide" icon="plus" onClick={() => setView('new')}>New board</Button>
+          <label className={btnClass('primary', { extra: 'wide' })}>
+            <Icon name="upload" />Import board file
+            <input type="file" accept=".json,application/json" className="sr-only" onChange={e => { importFile(e.target.files?.[0]); e.target.value = '' }} />
+          </label>
+        </div>
+
+        {/* 3. Pages: the overview, then every sprint board */}
+        <div className="side-section side-pages">
+          <p className="side-heading text-tertiary">Overview</p>
+          <button className={`board-link open-link ${view === 'actions' ? 'active' : ''}`} aria-current={view === 'actions' ? 'page' : undefined} onClick={() => setView('actions')}>
+            <Icon name="overview" className="link-icon" />
+            <span className="link-text">
+              <span>Open actions <span className="count">{open.length}</span></span>
+              <small className="text-tertiary">{overdue ? <span className="late-text">{overdue} overdue</span> : 'Across all boards'}</small>
+            </span>
+          </button>
+          <p className="side-heading text-tertiary">Sprint boards <span className="count">{boards.length}</span></p>
+          <nav aria-label="Boards">
+            {boards.map(b => (
+              <button
+                key={b.id}
+                className={`board-link ${view === 'board' && b.id === activeId ? 'active' : ''}`}
+                aria-current={view === 'board' && b.id === activeId ? 'page' : undefined}
+                onClick={() => { setActiveId(b.id); setView('board') }}
+              >
+                <Icon name="sprintBoard" className="link-icon" />
+                <span className="link-text">
+                  <span>{b.title || 'Untitled'}</span>
+                  <small className="text-tertiary">{b.cards.length} cards · {new Date(b.updatedAt).toLocaleDateString()}</small>
+                </span>
+              </button>
+            ))}
+            {boards.length === 0 && <p className="text-tertiary side-empty">No boards yet.</p>}
+          </nav>
+        </div>
+
+        {/* 4. Footer */}
+        <footer className="side-section side-footer">
+          <ThemeSwitch />
+          <div className="status">
+            <span className={`dot ${online ? 'on' : 'off'}`} /> {online ? 'Online' : 'Offline — still works'}
+            <br />
+            <span className="text-tertiary">{persisted ? 'Saved on this device (persistent)' : 'Saved on this device'}</span>
+          </div>
         </footer>
       </aside>
 
