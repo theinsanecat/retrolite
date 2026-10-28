@@ -218,11 +218,12 @@ nav { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; flex: 1
 .dot.on { background: var(--c0); }
 .dot.off { background: var(--c1); }
 
-/* Theme switch: a segmented control (radio group) */
-.theme-switch { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
-.theme-switch .tip-anchor { flex: 1; }
-.theme-switch .btn { flex: 1; min-height: 30px; padding: 0 6px; font-size: 13px; gap: 4px; }
-.theme-switch .btn[aria-checked=true] { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 0 0 1px var(--line), var(--shadow); }
+/* Segmented control (radio group): theme switch, chart type */
+.segmented { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+.segmented .btn { min-height: 28px; padding: 0 8px; font-size: 13px; gap: 4px; }
+.segmented .btn[aria-checked=true] { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 0 0 1px var(--line), var(--shadow); }
+.theme-switch { display: flex; }
+.theme-switch .tip-anchor, .theme-switch .btn { flex: 1; }
 
 main { padding: 24px 28px 60px; min-width: 0; }
 
@@ -255,6 +256,32 @@ main { padding: 24px 28px 60px; min-width: 0; }
 .mini-cols i { font-style: normal; font-size: 12px; padding: 2px 8px; border-radius: 999px; border-top: 3px solid var(--c); background: var(--bg); }
 .open-actions .actions { margin-top: 16px; }
 .open-actions .actions.overdue { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); }
+/* Chart box on the Open actions page */
+.chart-box { margin-top: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 12px; box-shadow: var(--shadow); }
+.chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.chart-head h2 { font-size: 16px; margin: 0 0 2px; }
+.chart-head p { margin: 0; }
+.chart-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.chart-controls .select-trigger { min-width: 132px; }
+.chart-canvas { position: relative; height: 260px; }
+.chart-empty { display: grid; place-items: center; height: 100%; margin: 0; border: 1px dashed var(--line); border-radius: 10px; }
+.chart-hint { margin: 8px 0 0; }
+.done-list p { margin: -4px 0 8px; }
+
+/* Confirm dialog */
+dialog.confirm {
+  width: min(440px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--line); border-radius: 16px;
+  background: var(--raised); color: var(--text); box-shadow: var(--shadow-pop);
+}
+dialog.confirm[open] { animation: pop-in .14s ease-out; }
+dialog.confirm::backdrop { background: rgb(20 17 29 / 45%); }
+.confirm-body { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; padding: 20px; }
+.confirm-body h2 { font-size: 17px; margin: 2px 0 6px; }
+.confirm-body p { margin: 0; line-height: 1.5; }
+.confirm-icon { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.confirm-icon.is-danger { background: var(--danger-soft); color: var(--danger); }
+.confirm-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
 .board-ref { color: var(--accent); max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
 .empty-note { margin-top: 24px; }
 
@@ -352,6 +379,8 @@ main { padding: 24px 28px 60px; min-width: 0; }
   .action { flex-wrap: wrap; }
   .action-text { flex-basis: calc(100% - 40px); }
   .toaster { right: 16px; bottom: 16px; }
+  .chart-head, .chart-controls { width: 100%; }
+  .chart-canvas { height: 300px; }
 }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 @media (hover: none) { .tip-anchor:has(.handle) { display: none; } }
