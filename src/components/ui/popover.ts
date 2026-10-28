@@ -7,7 +7,8 @@ import { useEffect, useLayoutEffect, useState, type RefObject } from 'react'
  */
 
 export type Side = 'top' | 'bottom'
-export interface Placement { top: number; left: number; side: Side }
+/** `arrow` is where the anchor's centre falls along the popup, for a pointer that stays on the anchor. */
+export interface Placement { top: number; left: number; side: Side; arrow: number }
 
 const GAP = 6, EDGE = 8
 
@@ -20,7 +21,8 @@ export function place(anchor: DOMRect, pop: { width: number; height: number }, p
   const top = side === 'bottom' ? anchor.bottom + GAP : anchor.top - GAP - pop.height
   let left = align === 'start' ? anchor.left : align === 'end' ? anchor.right - pop.width : anchor.left + anchor.width / 2 - pop.width / 2
   left = Math.max(EDGE, Math.min(left, vw - pop.width - EDGE))
-  return { top: Math.max(EDGE, Math.min(top, vh - pop.height - EDGE)), left, side }
+  const arrow = Math.max(12, Math.min(anchor.left + anchor.width / 2 - left, pop.width - 12))
+  return { top: Math.max(EDGE, Math.min(top, vh - pop.height - EDGE)), left, side, arrow }
 }
 
 /** Keep `pop` placed next to `anchor` while open, following scroll and resize. */
