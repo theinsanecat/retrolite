@@ -21,6 +21,8 @@ export interface ActionItem {
   owner: string
   due: string // YYYY-MM-DD or ''
   done: boolean
+  /** When it was marked done (ms), so the Done list shows the latest first. */
+  doneAt?: number
 }
 
 export interface Board {
@@ -87,5 +89,8 @@ export const TEMPLATES: Template[] = [
 
 /** Boards made before templates existed use the classic columns. */
 export const columnsOf = (board: Board): Column[] => board.columns ?? TEMPLATES[0].columns
+
+/** How an action with no owner is shown in the overview. */
+export const UNASSIGNED = 'Unassigned'
 
 export const uid = () => crypto.randomUUID()
