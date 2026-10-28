@@ -232,7 +232,7 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
         ))}
       </div>
 
-      <Actions items={board.actions} onChange={setActions} />
+      <Actions items={board.actions} boardTitle={board.title} onChange={setActions} />
 
       {menu && menuCard && (
         <Menu
