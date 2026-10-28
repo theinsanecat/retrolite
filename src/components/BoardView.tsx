@@ -186,10 +186,10 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
           {duplicateTitle && <small className="warn">Another board already has this name. It will get a number when you click away.</small>}
         </div>
         <div className="row">
-          <Button variant="primary" icon="link" tip="Copy a link that carries this whole board" onClick={onShare}>Share link</Button>
-          <Button variant="primary" icon="notes" tip="Copy meeting notes as Markdown, for Slack, Jira or email" onClick={onNotes}>Copy notes</Button>
-          <Button variant="primary" icon="download" tip="Save this board as a file: a backup, or for boards too big for a link" onClick={onDownload}>Download</Button>
-          <Button variant="secondary" danger icon="trash" tip="Delete this board from this device" onClick={onDelete}>Delete</Button>
+          <Button variant="primary" icon="link" tip="Copy a link that carries this whole board" onClick={onShare}><span className="label-wide">Share link</span></Button>
+          <Button variant="primary" icon="notes" tip="Copy meeting notes as Markdown, for Slack, Jira or email" onClick={onNotes}><span className="label-wide">Copy notes</span></Button>
+          <Button variant="primary" icon="download" tip="Save this board as a file: a backup, or for boards too big for a link" onClick={onDownload}><span className="label-wide">Download</span></Button>
+          <Button variant="secondary" danger icon="trash" tip="Delete this board from this device" onClick={onDelete}><span className="label-wide">Delete</span></Button>
         </div>
       </header>
 
