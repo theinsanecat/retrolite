@@ -201,29 +201,40 @@ input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); 
 
 .app { display: grid; grid-template-columns: 260px 1fr; height: 100vh; overflow: hidden; }
 
+/* Sidebar: four sections (brand, actions, pages, footer); only the pages section scrolls */
 .sidebar {
   border-right: 1px solid var(--line);
   background: var(--panel);
-  padding: 20px 14px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  position: sticky;
-  top: 0;
   height: 100vh;
+  min-height: 0;
 }
-.brand { display: flex; gap: 10px; align-items: center; margin-bottom: 4px; }
-.brand .logo { font-size: 28px; color: var(--accent); }
-.brand strong { display: block; }
-.brand small { color: var(--text-2); }
-nav { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; flex: 1; }
+.side-section { padding: 14px; border-bottom: 1px solid var(--line); }
+.side-section:last-child { border-bottom: none; }
+.side-brand { display: flex; gap: 10px; align-items: center; padding: 18px 14px; }
+.side-brand .logo { display: inline-flex; color: var(--accent); }
+.side-brand strong { display: block; }
+.side-brand small { color: var(--text-2); }
+.side-actions { display: flex; flex-direction: column; gap: 8px; }
+.side-pages { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.side-heading { margin: 4px 10px 6px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: 11px; }
+.side-heading:not(:first-child) { margin-top: 16px; }
+.side-empty { margin: 4px 10px; }
+.side-footer { border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+nav { display: flex; flex-direction: column; gap: 2px; }
 .board-link {
   text-align: left; border: none; background: transparent; border-radius: var(--radius);
-  padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; font-size: 14px;
+  padding: 8px 10px; display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; width: 100%;
 }
+.board-link .link-icon { margin-top: 2px; color: var(--text-3); }
+.board-link .link-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.board-link .link-text > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board-link small { color: var(--text-3); font-size: 12px; }
 .board-link:hover { background: var(--accent-soft); }
 .board-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .board-link.active { background: var(--accent-soft); font-weight: 600; }
+.board-link.active .link-icon { color: var(--accent); }
 .status { font-size: 13px; line-height: 1.6; }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
 .dot.on { background: var(--c0); }
@@ -257,8 +268,6 @@ main { display: flex; flex-direction: column; min-width: 0; min-height: 0; heigh
 .warn { color: var(--danger); font-size: 13px; }
 .late-text { color: var(--danger); }
 .open-link .count { margin-left: 2px; }
-.open-title { display: inline-flex; align-items: center; gap: 6px; }
-.open-title .icon { color: var(--accent); }
 
 .new-board form { max-width: 900px; }
 .new-board h1, .open-actions h1 { font-size: 26px; margin: 0 0 4px; }
@@ -389,8 +398,8 @@ dialog.confirm::backdrop { background: rgb(20 17 29 / 45%); }
 
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr; }
-  .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--line); }
-  nav { max-height: 160px; }
+  .sidebar { height: auto; border-right: none; border-bottom: 1px solid var(--line); }
+  .side-pages { max-height: 220px; }
   .app { height: auto; overflow: visible; }
   main { height: auto; }
   .main-banners { padding: 16px 16px 0; }
