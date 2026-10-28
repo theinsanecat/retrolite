@@ -2,6 +2,7 @@ import { useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 're
 import { createPortal } from 'react-dom'
 import { useAnchored, useClickAway } from './popover'
 import { btnClass, type Variant } from './Button'
+import { Icon } from './Icon'
 
 /*
  * A styled dropdown that behaves like a native <select> (listbox pattern):
@@ -84,7 +85,7 @@ export function Select({ label, value, options, onChange, variant = 'secondary',
         onKeyDown={onTriggerKey}
       >
         <span id={`${id}-value`}>{current?.label}</span>
-        <span className="chevron" aria-hidden>▾</span>
+        <Icon name="chevronDown" size={14} className="chevron" />
       </button>
       {open && createPortal(
         <ul
@@ -107,7 +108,7 @@ export function Select({ label, value, options, onChange, variant = 'secondary',
               onPointerMove={() => setActive(i)}
               onClick={() => choose(i)}
             >
-              <span className="option-check" aria-hidden>{o.value === value ? '✓' : ''}</span>
+              <span className="option-check">{o.value === value && <Icon name="check" size={14} />}</span>
               <span>{o.label}{o.hint && <span className="text-tertiary"> {o.hint}</span>}</span>
             </li>
           ))}
