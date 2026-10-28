@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { ActionItem, Board } from '../types'
 import { localDate, today } from './Actions'
+import { Button } from './ui/Button'
+import { Select } from './ui/Select'
 
 /*
  * Every unfinished action item from every board in one place, so actions
@@ -35,24 +37,25 @@ export function OpenActions({ boards, onToggle, onOpen }: {
     ['No due date', rows.filter(r => !r.action.due)],
   ]
   groups.forEach(([, g]) => g.sort((a, b) => a.action.due.localeCompare(b.action.due)))
+  const count = (o: string) => all.filter(r => r.action.owner === o).length
 
   return (
     <section className="open-actions">
       <header className="board-head">
         <div>
           <h1>Open actions</h1>
-          <p className="muted">Everything your retros agreed to do and haven't finished yet, across {boards.length} board{boards.length === 1 ? '' : 's'}.</p>
+          <p className="text-secondary">Everything your retros agreed to do and haven't finished yet, across {boards.length} board{boards.length === 1 ? '' : 's'}.</p>
         </div>
         {owners.length > 0 && (
-          <label className="move">Owner
-            <select value={owner} onChange={e => setOwner(e.target.value)}>
-              <option value="">Everyone</option>
-              {owners.map(o => <option key={o} value={o}>@{o}</option>)}
-            </select>
-          </label>
+          <Select
+            label="Owner"
+            value={owner}
+            onChange={setOwner}
+            options={[{ value: '', label: 'Everyone', hint: `· ${all.length}` }, ...owners.map(o => ({ value: o, label: `@${o}`, hint: `· ${count(o)}` }))]}
+          />
         )}
       </header>
-      {rows.length === 0 && <p className="empty-note">Nothing open. Every action is done 🎉</p>}
+      {rows.length === 0 && <p className="empty-note text-secondary">Nothing open. Every action is done 🎉</p>}
       {groups.filter(([, g]) => g.length).map(([name, g]) => (
         <div key={name} className={`actions ${name === 'Overdue' ? 'overdue' : ''}`}>
           <h2>{name} <span className="count">{g.length}</span></h2>
@@ -63,7 +66,7 @@ export function OpenActions({ boards, onToggle, onOpen }: {
                 <span className="action-text">{a.text}</span>
                 {a.owner && <span className="chip">@{a.owner}</span>}
                 {a.due && <span className={`chip ${a.due < t ? 'late' : ''}`}>{a.due}</span>}
-                <button className="ghost small board-ref" onClick={() => onOpen(board.id)} title="Open this board">{board.title} →</button>
+                <Button variant="tertiary" size="sm" className="board-ref" tip="Open this board" onClick={() => onOpen(board.id)}>{board.title} →</Button>
               </li>
             ))}
           </ul>
