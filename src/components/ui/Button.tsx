@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import { Icon, type IconName } from './Icon'
 import { Tooltip } from './Tooltip'
 import type { Side } from './popover'
@@ -26,6 +26,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   tip?: string
   tipSide?: Side
   children?: ReactNode
+  ref?: Ref<HTMLButtonElement>
 }
 
 export const btnClass = (variant: Variant = 'secondary', { size = 'md', danger = false, iconOnly = false, extra = '' } = {}) =>
