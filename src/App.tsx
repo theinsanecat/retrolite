@@ -20,10 +20,15 @@ import { ThemeSwitch } from './components/ui/ThemeSwitch'
 // extensions and bookmarks of this page don't keep a copy of it.
 const clearHash = () => history.replaceState(null, '', location.pathname + location.search)
 
-// Read once at start-up: ?demo (the link shared on LinkedIn) opens a sample
-// board for first-time visitors.
-let DEMO = new URLSearchParams(location.search).has('demo')
-if (DEMO) history.replaceState(null, '', location.pathname + location.hash)
+// Read once at start-up: the sample boards open for first-time visitors (and
+// with ?demo), so the app shows what it does straight away. After the first
+// visit they never come back on their own, even if every board is deleted.
+const SEEN = 'retrolite.seen'
+const firstVisit = (() => { try { return !localStorage.getItem(SEEN) } catch { return false } })()
+try { localStorage.setItem(SEEN, '1') } catch { /* private mode: fine */ }
+const askedForDemo = new URLSearchParams(location.search).has('demo')
+let DEMO = askedForDemo || (firstVisit && !location.hash.includes('share='))
+if (askedForDemo) history.replaceState(null, '', location.pathname + location.hash)
 
 type View = 'board' | 'new' | 'actions'
 
