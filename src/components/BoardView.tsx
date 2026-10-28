@@ -1,20 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, useLayoutEffect } from 'react'
 import { columnsOf, uid, type ActionItem, type Board, type Card, type Column } from '../types'
-import { childrenOf, groupUnder, linkCards, makeStandalone, moveToColumn, removeCard, totalVotes } from '../lib/cards'
+import {
+  byId, checkGroup, checkLink, childrenOf, groupUnder, linkCards, linksOf, moveToColumn, removeCard,
+  removeFromGroup, restoreCard, roleOf, totalVotes, ungroup, unlinkCards, type Outcome,
+} from '../lib/cards'
 import { Actions } from './Actions'
+import { Button } from './ui/Button'
+import { Menu, type MenuEntry } from './ui/Menu'
+import { Tooltip } from './ui/Tooltip'
+import { useToast } from './ui/Toaster'
 
 /*
- * Organizing cards uses one flow with two ways in:
- * - the ⋯ button on a card (works with mouse, keyboard and touch), or
- * - dragging a card onto another card (desktop shortcut)
- * Either way the banner asks what you want: group it under the other card,
- * or link the two as related. Dropping a card on an empty part of a column
- * moves it there.
+ * Every card action goes through the ⋯ menu (mouse, keyboard and touch), and
+ * dragging is a shortcut on desktop:
+ * - drag a card onto a column  → move it there
+ * - drag a card onto a card    → a small menu asks: group under it, or link as related
+ * "Group under…" and "Link to…" ask you to click the other card. Cards that
+ * can't be chosen are dimmed, and choosing one explains why in a toast.
+ * The rules for each case (standalone, parent, child, linked) live in lib/cards.ts.
  */
-type Organize =
-  | { cardId: string; step: 'menu' }
-  | { cardId: string; step: 'pick'; mode: 'group' | 'link' }
-  | { cardId: string; step: 'drop'; targetId: string }
+
+type Pick = { cardId: string; mode: 'group' | 'link' }
+type Open = { cardId: string; anchor: HTMLElement; targetId?: string }
 
 interface Props {
   board: Board
@@ -30,29 +37,139 @@ interface Props {
 const short = (s: string, n = 40) => (s.length > n ? s.slice(0, n - 1) + '…' : s)
 
 export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShare, onDownload, onNotes, onDelete }: Props) {
-  const [organize, setOrganize] = useState<Organize>()
+  const toast = useToast()
+  const [menu, setMenu] = useState<Open>()
+  const [pick, setPick] = useState<Pick>()
   const [dragId, setDragId] = useState<string>()
   const [highlight, setHighlight] = useState<string[]>([])
+  const latest = useRef(board)
+  useLayoutEffect(() => { latest.current = board })
   const columns = columnsOf(board)
   const cards = board.cards
-  const find = (id?: string) => cards.find(c => c.id === id)
+  const colTitle = (id: string) => columns.find(c => c.id === id)?.title ?? id
 
-  const setCards = (next: Card[]) => onChange({ ...board, cards: next })
-  const setActions = (actions: ActionItem[]) => onChange({ ...board, actions })
+  const setCards = (next: Card[]) => onChange({ ...latest.current, cards: next })
+  const setActions = (actions: ActionItem[]) => onChange({ ...latest.current, actions })
 
-  const finish = (next: Card[]) => { setCards(next); setOrganize(undefined) }
-  const pick = (targetId: string) => {
-    if (organize?.step !== 'pick' || targetId === organize.cardId) return
-    finish(organize.mode === 'group' ? groupUnder(cards, organize.cardId, targetId) : linkCards(cards, organize.cardId, targetId))
+  /** Apply an outcome from lib/cards: change the cards, or explain why not. */
+  const act = (o: Outcome) => {
+    if (o.ok) setCards(o.cards)
+    toast(o.msg, o.vars)
+    return o.ok
   }
+
+  const startPick = (cardId: string, mode: Pick['mode']) => {
+    const check = mode === 'group' ? checkGroup : checkLink
+    if (!cards.some(c => c.id !== cardId && !check(cards, cardId, c.id))) {
+      toast(mode === 'group' ? 'group.noTargets' : 'link.noTargets')
+      return
+    }
+    setHighlight([])
+    setPick({ cardId, mode })
+  }
+  const choose = (targetId: string) => {
+    if (!pick) return
+    const ok = act(pick.mode === 'group' ? groupUnder(cards, pick.cardId, targetId) : linkCards(cards, pick.cardId, targetId))
+    if (ok) setPick(undefined)
+  }
+
+  useEffect(() => {
+    if (!pick) return
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setPick(undefined)
+    addEventListener('keydown', key)
+    return () => removeEventListener('keydown', key)
+  }, [pick])
+
+  const remove = (id: string) => {
+    const { outcome, removed } = removeCard(cards, id)
+    if (!outcome.ok) return
+    setCards(outcome.cards)
+    toast(outcome.msg, outcome.vars, {
+      action: { label: 'Undo', run: () => { setCards(restoreCard(latest.current.cards, removed)); toast('card.restored') } },
+    })
+  }
+
   const dropOnColumn = (column: string) => {
-    if (!dragId) return
-    const c = find(dragId)
-    if (c && (c.column !== column || c.parentId)) setCards(moveToColumn(cards, dragId, column))
+    const id = dragId
     setDragId(undefined)
+    if (!id) return
+    const c = byId(cards, id)
+    if (!c || (c.column === column && !c.parentId)) return // dropped back where it was
+    act(moveToColumn(cards, id, column, colTitle(column)))
   }
 
-  const subject = find(organize?.cardId)
+  /** The ⋯ menu: what can be done with this card, given its role. */
+  const cardMenu = (card: Card): MenuEntry[] => {
+    const role = roleOf(cards, card)
+    const kids = childrenOf(cards, card.id).length
+    const links = linksOf(cards, card)
+    const canGroup = cards.some(c => c.id !== card.id && !checkGroup(cards, card.id, c.id))
+    const canLink = cards.some(c => c.id !== card.id && !checkLink(cards, card.id, c.id))
+    const entries: MenuEntry[] = [
+      { kind: 'heading', label: 'Organize' },
+      {
+        id: 'group', icon: '⤵', label: role === 'child' ? 'Move to another group…' : 'Group under a card…',
+        hint: role === 'parent' ? `Brings its ${kids} grouped card${kids === 1 ? '' : 's'} along` : 'Then click the card to group it under',
+        blocked: !canGroup, onSelect: () => startPick(card.id, 'group'),
+      },
+    ]
+    if (role === 'child') entries.push({ id: 'out', icon: '⤴', label: 'Take out of group', hint: 'Stays in this column', onSelect: () => act(removeFromGroup(cards, card.id)) })
+    if (role === 'parent') entries.push({ id: 'ungroup', icon: '⇱', label: `Ungroup ${kids} card${kids === 1 ? '' : 's'}`, hint: kids === 1 ? 'It stays in this column, on its own' : 'They stay in this column, on their own', onSelect: () => act(ungroup(cards, card.id)) })
+    entries.push({ id: 'link', icon: '↔', label: 'Link to a related card…', hint: 'In any column', blocked: !canLink, onSelect: () => startPick(card.id, 'link') })
+    for (const id of links) {
+      const other = byId(cards, id)!
+      entries.push({ id: `unlink-${id}`, icon: '✂', label: `Unlink “${short(other.text, 28)}”`, onSelect: () => act(unlinkCards(cards, card.id, id)) })
+    }
+
+    const targets = columns.filter(c => c.id !== card.column)
+    if (targets.length) {
+      entries.push({ kind: 'separator' }, { kind: 'heading', label: 'Move to column' })
+      for (const col of targets) {
+        entries.push({
+          id: `move-${col.id}`, icon: '→', label: col.title,
+          hint: role === 'parent' ? `With its ${kids} grouped card${kids === 1 ? '' : 's'}` : role === 'child' ? 'Leaves its group' : undefined,
+          onSelect: () => act(moveToColumn(cards, card.id, col.id, col.title)),
+        })
+      }
+    }
+
+    entries.push(
+      { kind: 'separator' },
+      { id: 'edit', icon: '✎', label: 'Edit text', onSelect: () => document.getElementById(`card-text-${card.id}`)?.focus() },
+      {
+        id: 'reset', icon: '↺', label: 'Reset votes', hint: card.votes ? `Takes back all ${card.votes}` : undefined, blocked: !card.votes,
+        onSelect: () => {
+          if (!card.votes) return toast('card.noVotes', { a: card.text })
+          setCards(cards.map(c => (c.id === card.id ? { ...c, votes: 0 } : c)))
+          toast('card.votesReset', { a: card.text })
+        },
+      },
+      {
+        id: 'delete', icon: '🗑', label: 'Delete card', danger: true,
+        hint: role === 'parent' ? (kids === 1 ? 'Its grouped card stays, on its own' : `Its ${kids} grouped cards stay, on their own`) : undefined,
+        onSelect: () => remove(card.id),
+      },
+    )
+    // blocked items still run: startPick and the checks explain why it can't be done
+    return entries
+  }
+
+  /** After dropping a card on another card: group or link? */
+  const dropMenu = (cardId: string, targetId: string): MenuEntry[] => {
+    const target = byId(cards, targetId)!
+    const groupBlocked = checkGroup(cards, cardId, targetId)
+    const linkBlocked = checkLink(cards, cardId, targetId)
+    return [
+      { kind: 'heading', label: `Dropped on “${short(target.text, 30)}”` },
+      { id: 'drop-group', icon: '⤵', label: 'Group under it', hint: target.parentId ? 'Joins its group' : undefined, blocked: !!groupBlocked, onSelect: () => act(groupUnder(cards, cardId, targetId)) },
+      { id: 'drop-link', icon: '↔', label: 'Link as related', blocked: !!linkBlocked, onSelect: () => act(linkCards(cards, cardId, targetId)) },
+      { kind: 'separator' },
+      { id: 'drop-cancel', icon: '', label: 'Cancel', onSelect: () => {} },
+    ]
+  }
+
+  const subject = byId(cards, pick?.cardId)
+  const menuCard = byId(cards, menu?.cardId)
 
   return (
     <section className="board">
@@ -68,44 +185,20 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
           {duplicateTitle && <small className="warn">Another board already has this name. It will get a number when you click away.</small>}
         </div>
         <div className="row">
-          <button onClick={onShare} title="Copy a link that carries this whole board">Share link</button>
-          <button onClick={onNotes} title="Copy meeting notes as Markdown">Copy notes</button>
-          <button onClick={onDownload} title="Save this board as a file: a backup, or for boards too big for a link">Download</button>
-          <button className="ghost danger" onClick={onDelete}>Delete</button>
+          <Button tip="Copy a link that carries this whole board" onClick={onShare}>Share link</Button>
+          <Button tip="Copy meeting notes as Markdown, for Slack, Jira or email" onClick={onNotes}>Copy notes</Button>
+          <Button tip="Save this board as a file: a backup, or for boards too big for a link" onClick={onDownload}>Download</Button>
+          <Button variant="tertiary" danger tip="Delete this board from this device" onClick={onDelete}>Delete</Button>
         </div>
       </header>
 
-      {organize && subject && (
-        <div className="banner organize" role="dialog" aria-label="Organize card">
-          {organize.step === 'menu' && (<>
-            <div><strong>Organize “{short(subject.text)}”</strong></div>
-            <div className="row">
-              <button onClick={() => setOrganize({ cardId: subject.id, step: 'pick', mode: 'group' })}>Group under a card</button>
-              <button onClick={() => setOrganize({ cardId: subject.id, step: 'pick', mode: 'link' })}>Link to a related card</button>
-              <label className="move">Move to
-                <select value="" onChange={e => e.target.value && finish(moveToColumn(cards, subject.id, e.target.value))}>
-                  <option value="">column…</option>
-                  {columns.filter(c => c.id !== subject.column || subject.parentId).map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-                </select>
-              </label>
-              {(subject.parentId || subject.links?.length) && (
-                <button onClick={() => finish(makeStandalone(cards, subject.id))}>Make standalone</button>
-              )}
-              <button className="ghost" onClick={() => setOrganize(undefined)}>Cancel</button>
-            </div>
-          </>)}
-          {organize.step === 'pick' && (<>
-            <div><strong>{organize.mode === 'group' ? `Click the card to group “${short(subject.text)}” under` : `Click the card that's related to “${short(subject.text)}”`}</strong></div>
-            <button className="ghost" onClick={() => setOrganize(undefined)}>Cancel</button>
-          </>)}
-          {organize.step === 'drop' && (<>
-            <div><strong>“{short(subject.text, 30)}” → “{short(find(organize.targetId)?.text ?? '', 30)}”</strong></div>
-            <div className="row">
-              <button className="primary" onClick={() => finish(groupUnder(cards, subject.id, organize.targetId))}>Group under it</button>
-              <button onClick={() => finish(linkCards(cards, subject.id, organize.targetId))}>Link as related</button>
-              <button className="ghost" onClick={() => setOrganize(undefined)}>Cancel</button>
-            </div>
-          </>)}
+      {pick && subject && (
+        <div className="banner organize" role="status">
+          <span>
+            <strong>{pick.mode === 'group' ? 'Group under which card?' : 'Link to which card?'}</strong>
+            <span className="text-secondary"> Click a highlighted card for “{short(subject.text)}”. Esc cancels.</span>
+          </span>
+          <Button variant="tertiary" size="sm" onClick={() => setPick(undefined)}>Cancel</Button>
         </div>
       )}
 
@@ -116,20 +209,22 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
             index={i}
             column={col}
             cards={cards}
-            picking={organize?.step === 'pick' ? organize.cardId : undefined}
-            dragging={!!dragId}
+            pick={pick}
+            dragId={dragId}
+            menuId={menu?.cardId}
             highlight={highlight}
             onAdd={text => setCards([...cards, { id: uid(), column: col.id, text, votes: 0 }])}
+            onEmpty={() => toast('card.empty')}
             onUpdate={card => setCards(cards.map(c => (c.id === card.id ? card : c)))}
-            onRemove={id => setCards(removeCard(cards, id))}
-            onOrganize={id => setOrganize({ cardId: id, step: 'menu' })}
-            onPick={pick}
+            onMenu={(cardId, anchor) => setMenu({ cardId, anchor })}
+            onPick={choose}
             onHighlight={ids => setHighlight(h => (h.join() === ids.join() ? [] : ids))}
-            onDragStart={setDragId}
+            onDragStart={id => { setPick(undefined); setDragId(id) }}
             onDragEnd={() => setDragId(undefined)}
-            onDropOnCard={targetId => {
-              if (dragId && dragId !== targetId) setOrganize({ cardId: dragId, step: 'drop', targetId })
+            onDropOnCard={(targetId, anchor) => {
+              const id = dragId
               setDragId(undefined)
+              if (id && id !== targetId) setMenu({ cardId: id, targetId, anchor })
             }}
             onDropOnColumn={() => dropOnColumn(col.id)}
           />
@@ -137,6 +232,16 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
       </div>
 
       <Actions items={board.actions} onChange={setActions} />
+
+      {menu && menuCard && (
+        <Menu
+          anchor={menu.anchor}
+          label={menu.targetId ? 'Group or link' : 'Card options'}
+          align={menu.targetId ? 'start' : 'end'}
+          entries={menu.targetId ? dropMenu(menu.cardId, menu.targetId) : cardMenu(menuCard)}
+          onClose={refocus => { setMenu(undefined); if (refocus) menu.anchor.focus() }}
+        />
+      )}
     </section>
   )
 }
@@ -145,18 +250,19 @@ interface ColumnProps {
   index: number
   column: Column
   cards: Card[]
-  picking?: string
-  dragging: boolean
+  pick?: Pick
+  dragId?: string
+  menuId?: string
   highlight: string[]
   onAdd: (text: string) => void
+  onEmpty: () => void
   onUpdate: (c: Card) => void
-  onRemove: (id: string) => void
-  onOrganize: (id: string) => void
+  onMenu: (id: string, anchor: HTMLElement) => void
   onPick: (id: string) => void
   onHighlight: (ids: string[]) => void
   onDragStart: (id: string) => void
   onDragEnd: () => void
-  onDropOnCard: (id: string) => void
+  onDropOnCard: (id: string, anchor: HTMLElement) => void
   onDropOnColumn: () => void
 }
 
@@ -166,19 +272,15 @@ function ColumnView(p: ColumnProps) {
   const mine = p.cards.filter(c => c.column === p.column.id)
   const top = mine.filter(c => !c.parentId).sort((a, b) => totalVotes(p.cards, b) - totalVotes(p.cards, a))
   const add = () => {
-    if (!draft.trim()) return
+    if (!draft.trim()) return p.onEmpty()
     p.onAdd(draft.trim())
     setDraft('')
   }
-  const item = (card: Card, child = false) => (
-    <CardItem key={card.id} card={card} child={child} {...p} total={child ? card.votes : totalVotes(p.cards, card)}
-      kids={child ? 0 : childrenOf(p.cards, card.id).length} />
-  )
   return (
     <div
-      className={`column col-${p.index} ${over ? 'drop' : ''}`}
-      onDragOver={e => { if (p.dragging) { e.preventDefault(); setOver(true) } }}
-      onDragLeave={() => setOver(false)}
+      className={`column col-${p.index} ${over ? 'is-drop' : ''}`}
+      onDragOver={e => { if (p.dragId) { e.preventDefault(); setOver(true) } }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(false) }}
       onDrop={e => { e.preventDefault(); setOver(false); p.onDropOnColumn() }}
     >
       <h2>{p.column.title} <span className="count">{mine.length}</span></h2>
@@ -186,43 +288,58 @@ function ColumnView(p: ColumnProps) {
         <input placeholder={p.column.hint} aria-label={`Add to ${p.column.title}`} value={draft} onChange={e => setDraft(e.target.value)} />
       </form>
       <ul>
-        {top.map(card => (
-          <li key={card.id} className="group">
-            <ul>
-              {item(card)}
-              {childrenOf(p.cards, card.id).sort((a, b) => b.votes - a.votes).map(k => item(k, true))}
-            </ul>
-          </li>
-        ))}
+        {top.map(card => {
+          const kids = childrenOf(p.cards, card.id).sort((a, b) => b.votes - a.votes)
+          return (
+            <li key={card.id} className={`card-group ${kids.length ? 'card-group--has-children' : ''}`}>
+              <ul>
+                <CardItem card={card} {...p} />
+                {kids.map(k => <CardItem key={k.id} card={k} {...p} />)}
+              </ul>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )
 }
 
-interface CardProps extends ColumnProps {
-  card: Card
-  child: boolean
-  total: number
-  kids: number
-}
-
-function CardItem({ card, child, total, kids, cards, picking, highlight, onUpdate, onRemove, onOrganize, onPick, onHighlight, onDragStart, onDragEnd, onDropOnCard, dragging }: CardProps) {
+function CardItem({ card, cards, pick, dragId, menuId, highlight, onUpdate, onMenu, onPick, onHighlight, onDragStart, onDragEnd, onDropOnCard }: ColumnProps & { card: Card }) {
   const [armed, setArmed] = useState(false)
   const [over, setOver] = useState(false)
-  const links = (card.links ?? []).filter(id => cards.some(c => c.id === id))
-  const isTarget = picking && picking !== card.id
+  const role = roleOf(cards, card)
+  const links = linksOf(cards, card)
+  const kids = childrenOf(cards, card.id).length
+  const total = totalVotes(cards, card)
+
+  // while choosing a card for group/link: is this one a valid choice?
+  const picking = pick && pick.cardId !== card.id
+  const invalid = picking && !!(pick.mode === 'group' ? checkGroup : checkLink)(cards, pick.cardId, card.id)
+
+  const state = [
+    'card', `card--${role}`,
+    links.length && 'is-linked',
+    highlight.includes(card.id) && 'is-lit',
+    pick?.cardId === card.id && 'is-source',
+    picking && (invalid ? 'is-invalid' : 'is-target'),
+    over && 'is-drop',
+    dragId === card.id && 'is-dragging',
+    menuId === card.id && 'is-menu-open',
+  ].filter(Boolean).join(' ')
+
   return (
     <li
-      className={`card ${child ? 'child' : ''} ${highlight.includes(card.id) ? 'lit' : ''} ${isTarget ? 'target' : ''} ${over ? 'drop' : ''}`}
+      className={state}
       draggable={armed}
-      onDragStart={e => { e.dataTransfer.setData('text/plain', card.id); onDragStart(card.id) }}
+      onDragStart={e => { e.dataTransfer.setData('text/plain', card.id); e.dataTransfer.effectAllowed = 'move'; onDragStart(card.id) }}
       onDragEnd={() => { setArmed(false); onDragEnd() }}
-      onDragOver={e => { if (dragging) { e.preventDefault(); e.stopPropagation(); setOver(true) } }}
-      onDragLeave={() => setOver(false)}
-      onDrop={e => { e.preventDefault(); e.stopPropagation(); setOver(false); onDropOnCard(card.id) }}
+      onDragOver={e => { if (dragId && dragId !== card.id) { e.preventDefault(); e.stopPropagation(); setOver(true) } }}
+      onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOver(false) }}
+      onDrop={e => { e.preventDefault(); e.stopPropagation(); setOver(false); onDropOnCard(card.id, e.currentTarget) }}
     >
-      {child && <span className="child-mark" aria-hidden>↳</span>}
+      {role === 'child' && <span className="child-mark" aria-hidden>↳</span>}
       <textarea
+        id={`card-text-${card.id}`}
         aria-label="Card text"
         value={card.text}
         rows={Math.max(1, Math.ceil(card.text.length / 32))}
@@ -230,31 +347,42 @@ function CardItem({ card, child, total, kids, cards, picking, highlight, onUpdat
       />
       {(kids > 0 || links.length > 0) && (
         <div className="card-tags">
-          {kids > 0 && <span className="chip" title="Votes for this card and the cards grouped under it">▲ {total} in group</span>}
+          {kids > 0 && (
+            <Tooltip text={`${card.votes} vote${card.votes === 1 ? '' : 's'} here, plus ${total - card.votes} from the ${kids} grouped card${kids === 1 ? '' : 's'}`}>
+              <span className="chip" tabIndex={0}>▲ {total} in group</span>
+            </Tooltip>
+          )}
           {links.length > 0 && (
-            <button className="chip link-chip" onClick={() => onHighlight(links)} title="Show related cards">
+            <Button variant="tertiary" size="sm" className="chip link-chip" tip="Highlight the related cards" onClick={() => onHighlight(links)}>
               ↔ {links.length} related
-            </button>
+            </Button>
           )}
         </div>
       )}
       <div className="card-foot">
-        <span
-          className="handle"
-          title="Drag onto another card to group or link, or onto a column to move"
-          aria-hidden
-          onMouseDown={() => setArmed(true)}
-          onMouseUp={() => setArmed(false)}
-        >⠿</span>
+        <Tooltip text="Drag onto a card to group or link, or onto a column to move">
+          <span className="handle" aria-hidden onMouseDown={() => setArmed(true)} onMouseUp={() => setArmed(false)}>⠿</span>
+        </Tooltip>
         <span className="spacer" />
-        <button className="vote" onClick={() => onUpdate({ ...card, votes: card.votes + 1 })} aria-label="Vote">▲ {card.votes}</button>
+        <Button variant="secondary" size="sm" className="vote" label={`Vote (${card.votes})`} tip="Vote" onClick={() => onUpdate({ ...card, votes: card.votes + 1 })}>
+          ▲ {card.votes}
+        </Button>
         {card.votes > 0 && (
-          <button className="ghost small" onClick={() => onUpdate({ ...card, votes: card.votes - 1 })} aria-label="Remove vote">−</button>
+          <Button variant="tertiary" size="sm" icon label="Take back a vote" onClick={() => onUpdate({ ...card, votes: card.votes - 1 })}>−</Button>
         )}
-        <button className="ghost small" onClick={() => onOrganize(card.id)} aria-label="Organize card" title="Group, link or move">⋯</button>
-        <button className="ghost small" onClick={() => onRemove(card.id)} aria-label="Delete card">✕</button>
+        <Button
+          variant="tertiary" size="sm" icon label="Card options"
+          aria-haspopup="menu" aria-expanded={menuId === card.id}
+          onClick={e => onMenu(card.id, e.currentTarget)}
+        >⋯</Button>
       </div>
-      {isTarget && <button className="pick" onClick={() => onPick(card.id)} aria-label={`Choose “${card.text}”`} />}
+      {picking && (
+        <button
+          className="pick"
+          onClick={() => onPick(card.id)}
+          aria-label={invalid ? `Can't choose “${card.text}”` : `Choose “${card.text}”`}
+        />
+      )}
     </li>
   )
 }
