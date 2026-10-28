@@ -3,7 +3,7 @@ import { TEMPLATES, uid, type Board } from './types'
 import { deleteBoard, listBoards, requestPersistence, saveBoard } from './lib/db'
 import { LONG_LINK, downloadFile, readFile, readShare, shareUrl } from './lib/share'
 import { toMarkdown } from './lib/markdown'
-import { sampleBoard } from './lib/sample'
+import { sampleBoard, sampleBoards } from './lib/sample'
 import { isTaken, uniqueTitle } from './lib/titles'
 import { BoardView } from './components/BoardView'
 import { NewBoard } from './components/NewBoard'
@@ -45,10 +45,10 @@ export default function App() {
     listBoards().then(list => {
       if (DEMO && list.length === 0) {
         DEMO = false
-        const sample = sampleBoard()
-        saveBoard(sample)
-        setBoards(bs => (bs.length ? bs : [sample]))
-        setActiveId(id => id ?? sample.id)
+        const samples = sampleBoards()
+        samples.forEach(saveBoard)
+        setBoards(bs => (bs.length ? bs : samples))
+        setActiveId(id => id ?? samples[0].id)
         toast('board.sample')
         return
       }
