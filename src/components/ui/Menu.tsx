@@ -1,6 +1,7 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useAnchored, useClickAway } from './popover'
+import { Icon, type IconName } from './Icon'
 
 /*
  * A popup menu anchored to a button (the ⋯ on a card, or a dropped card).
@@ -10,7 +11,7 @@ import { useAnchored, useClickAway } from './popover'
  */
 
 export type MenuEntry =
-  | { kind?: 'item'; id: string; label: string; hint?: string; icon?: string; danger?: boolean; blocked?: boolean; onSelect: () => void }
+  | { kind?: 'item'; id: string; label: string; hint?: string; icon?: IconName; danger?: boolean; blocked?: boolean; onSelect: () => void }
   | { kind: 'heading'; label: string }
   | { kind: 'separator' }
 
@@ -63,7 +64,7 @@ export function Menu({ anchor, label, entries, onClose, align = 'end' }: Props) 
             className={`menu-item ${e.danger ? 'is-danger' : ''} ${e.blocked ? 'is-blocked' : ''}`}
             onClick={() => { onClose(false); e.onSelect() }}
           >
-            <span className="menu-icon" aria-hidden>{e.icon}</span>
+            <span className="menu-icon">{e.icon && <Icon name={e.icon} />}</span>
             <span className="menu-text">
               <span className="menu-label">{e.label}</span>
               {e.hint && <span className="menu-hint text-tertiary">{e.hint}</span>}
