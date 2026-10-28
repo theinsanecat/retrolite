@@ -8,6 +8,8 @@ Pick a retro format, add cards, dot-vote, group and link related cards, and agre
 
 - **Retro formats:** Went well / To improve / Ideas, Start / Stop / Continue, Mad / Sad / Glad, and the 4Ls (Liked / Learned / Lacked / Longed for).
 - **Organize cards:** keep a card standalone, group it under another card (one level deep; the parent shows the group's total votes), or link related cards as siblings, even across columns. Drag a card onto another card, or use the ⋯ menu on touch screens and keyboards.
+- **Card options menu (⋯):** group, ungroup, take out of a group, link and unlink, move to another column, edit, reset votes, delete (with undo). What it offers depends on whether the card is standalone, a group parent or grouped under another card, and the rules for every case live in `src/lib/cards.ts`.
+- **Clear feedback:** every action confirms itself in a toast, and actions that aren't allowed explain why. All the wording lives in `src/messages.json`.
 - **Open actions across boards:** every unfinished action item from every retro in one list, overdue first, filterable by owner.
 - **Unique board names:** a new, imported or renamed board that clashes with an existing name gets a number, like "Sprint retro (2)".
 - **Sample board:** open the app with `?demo` to start on a filled board that explains itself.
@@ -29,6 +31,10 @@ Sharing uses the browser's built-in `CompressionStream`, so there are no extra d
 - **The link is removed from the address bar** as soon as the board is read, so other scripts, extensions or bookmarks of the page don't keep a copy.
 - **Long links can break** in some chat apps. Past 2,000 characters Retrolite warns you; use **Download** and **Import board file** instead.
 - **Browsers can clear site data.** Persistent storage is requested, and Safari may still clear data for sites you don't visit for a while, so download important boards as a backup or install the app.
+
+## UI components
+
+Small, dependency-free components in `src/components/ui`: `Button` (primary, secondary and tertiary variants), `Tooltip`, `Menu`, `Select` (an accessible custom dropdown) and `Toaster`. Menus and dropdowns work with the keyboard (arrows, Home/End, Enter, Esc, type-ahead).
 
 ## Stack
 
