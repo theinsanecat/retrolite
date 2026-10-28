@@ -1,0 +1,51 @@
+{
+  "board.sample": {"type": "info", "text": "This is a sample board. Play around: everything stays in your browser."},
+  "board.renamed": {"type": "warning", "text": "Another board already had that name, so this one is now “{title}”."},
+  "board.saved": {"type": "success", "text": "Saved a copy to this device."},
+  "board.savedAs": {"type": "success", "text": "Saved a copy as “{title}”, because that name was taken."},
+  "board.deleted": {"type": "success", "text": "Board deleted from this device."},
+
+  "share.copied": {"type": "success", "text": "Link copied ({n} characters)."},
+  "share.long": {"type": "warning", "text": "Link copied, but it's long ({n} characters). Some chat apps cut long links; if it doesn't open, send the board file instead."},
+  "share.failed": {"type": "error", "text": "Couldn't copy the link. Copy it from the box that opened instead."},
+
+  "file.downloaded": {"type": "success", "text": "Board file downloaded."},
+
+  "notes.copied": {"type": "success", "text": "Meeting notes copied as Markdown."},
+
+  "action.done": {"type": "success", "text": "Marked “{text}” as done."},
+  "action.reopened": {"type": "info", "text": "Reopened “{text}”."},
+  "action.needsText": {"type": "warning", "text": "Write what you'll do before adding the action."},
+  "action.deleted": {"type": "success", "text": "Action deleted."},
+
+  "card.empty": {"type": "warning", "text": "Write something before adding a card."},
+  "card.deleted": {"type": "success", "text": "Card deleted."},
+  "card.deletedParent": {"type": "success", "text": "Card deleted. The {n} card{s} grouped under it are now on their own."},
+  "card.restored": {"type": "success", "text": "Card restored."},
+  "card.votesReset": {"type": "success", "text": "Votes reset on “{a}”."},
+  "card.noVotes": {"type": "warning", "text": "“{a}” has no votes to take back."},
+
+  "group.done": {"type": "success", "text": "Grouped “{a}” under “{b}”."},
+  "group.withChildren": {"type": "success", "text": "Grouped “{a}” and its {n} card{s} under “{b}”. Groups are one level deep, so they all sit together now."},
+  "group.redirected": {"type": "info", "text": "“{b}” is already in a group, so “{a}” joined that group, under “{p}”."},
+  "group.removed": {"type": "success", "text": "Took “{a}” out of its group."},
+  "group.ungrouped": {"type": "success", "text": "Ungrouped {n} card{s} from “{a}”."},
+  "group.self": {"type": "warning", "text": "A card can't be grouped under itself."},
+  "group.intoOwnChild": {"type": "warning", "text": "“{a}” can't go under one of its own grouped cards. Take “{b}” out of the group first."},
+  "group.already": {"type": "warning", "text": "“{a}” is already in this group."},
+  "group.notChild": {"type": "warning", "text": "“{a}” isn't in a group."},
+  "group.noChildren": {"type": "warning", "text": "No cards are grouped under “{a}”."},
+  "group.noTargets": {"type": "warning", "text": "There's no other card to group this one under yet."},
+
+  "link.done": {"type": "success", "text": "Linked “{a}” and “{b}” as related."},
+  "link.removed": {"type": "success", "text": "Unlinked “{a}” and “{b}”."},
+  "link.self": {"type": "warning", "text": "A card can't be linked to itself."},
+  "link.already": {"type": "warning", "text": "“{a}” and “{b}” are already linked."},
+  "link.sameGroup": {"type": "warning", "text": "“{a}” and “{b}” are in the same group, so they're already related."},
+  "link.noTargets": {"type": "warning", "text": "There's no other card to link this one to yet."},
+
+  "move.done": {"type": "success", "text": "Moved “{a}” to {column}."},
+  "move.withChildren": {"type": "success", "text": "Moved “{a}” and its {n} grouped card{s} to {column}."},
+  "move.leftGroup": {"type": "success", "text": "Moved “{a}” to {column} and took it out of its group."},
+  "move.same": {"type": "warning", "text": "“{a}” is already in {column}."}
+}
