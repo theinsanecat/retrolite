@@ -2,14 +2,17 @@ import { useRef, useState, useLayoutEffect } from 'react'
 import { uid, type ActionItem } from '../types'
 import { Button } from './ui/Button'
 import { useToast } from './ui/Toaster'
+import { useConfirm } from './ui/Confirm'
+import { msg } from '../lib/messages'
 
 /** Today as YYYY-MM-DD in the user's own time zone. */
 export const localDate = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 export const today = () => localDate()
 
-export function Actions({ items, onChange }: { items: ActionItem[]; onChange: (a: ActionItem[]) => void }) {
+export function Actions({ items, boardTitle, onChange }: { items: ActionItem[]; boardTitle: string; onChange: (a: ActionItem[]) => void }) {
   const toast = useToast()
+  const confirm = useConfirm()
   const latest = useRef(items)
   useLayoutEffect(() => { latest.current = items })
   const [text, setText] = useState('')
@@ -21,12 +24,17 @@ export function Actions({ items, onChange }: { items: ActionItem[]; onChange: (a
     setText(''); setOwner(''); setDue('')
   }
   const toggle = (a: ActionItem) => {
-    onChange(items.map(i => (i.id === a.id ? { ...a, done: !a.done } : i)))
+    onChange(items.map(i => (i.id === a.id ? { ...a, done: !a.done, doneAt: a.done ? undefined : Date.now() } : i)))
     toast(a.done ? 'action.reopened' : 'action.done', { text: a.text })
   }
-  const remove = (a: ActionItem) => {
-    const index = items.indexOf(a)
-    onChange(items.filter(i => i.id !== a.id))
+  const remove = async (a: ActionItem) => {
+    const ok = await confirm({
+      title: 'Delete this action?', danger: true, icon: 'trash', confirmLabel: 'Delete',
+      message: msg('confirm.deleteAction', { text: a.text, board: boardTitle }).text,
+    })
+    if (!ok) return toast('action.kept', { text: a.text })
+    const index = latest.current.findIndex(i => i.id === a.id)
+    onChange(latest.current.filter(i => i.id !== a.id))
     toast('action.deleted', {}, { action: { label: 'Undo', run: () => {
       const now = latest.current.filter(i => i.id !== a.id)
       onChange([...now.slice(0, index), a, ...now.slice(index)])
