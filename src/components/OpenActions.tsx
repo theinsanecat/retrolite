@@ -66,7 +66,7 @@ export function OpenActions({ boards, onToggle, onOpen }: {
                 <span className="action-text">{a.text}</span>
                 {a.owner && <span className="chip">@{a.owner}</span>}
                 {a.due && <span className={`chip ${a.due < t ? 'late' : ''}`}>{a.due}</span>}
-                <Button variant="tertiary" size="sm" className="board-ref" tip="Open this board" onClick={() => onOpen(board.id)}>{board.title} →</Button>
+                <Button variant="tertiary" size="sm" className="board-ref" icon="arrowRight" tip="Open this board" onClick={() => onOpen(board.id)}>{board.title}</Button>
               </li>
             ))}
           </ul>
