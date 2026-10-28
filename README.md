@@ -14,7 +14,8 @@ Pick a retro format, add cards, dot-vote, group and link related cards, and agre
 - **Done actions are kept:** finished actions stay in a Done list until you delete them, and Retrolite asks before deleting an action or a board.
 - **Unique board names:** a new, imported or renamed board that clashes with an existing name gets a number, like "Sprint retro (2)".
 - **Light and dark theme:** follows your device by default; switch to Light or Dark at the bottom of the sidebar.
-- **Sample board:** open the app with `?demo` to start on a filled board that explains itself.
+- **Sidebar in four sections:** brand, actions (New board, Import), pages (the Open actions overview and every sprint board, each with its own icon) and a footer with the theme switch and save status. The brand section and every page header share one height, so their borders line up.
+- **Sample boards:** a first visit (or any visit with `?demo`) opens two filled boards, this sprint's and last sprint's on a different template, with groups, links, votes and actions for several owners (overdue, upcoming, undated and done), so every feature has something to show. They never come back on their own once you've visited.
 
 ## How it works without a backend
 
