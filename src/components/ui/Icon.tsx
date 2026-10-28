@@ -38,6 +38,8 @@ const PATHS = {
   barChart: <path d="M4 20h16M7 16v-5M12 16V6M17 16v-8" />,
   pieChart: <><path d="M12 3a9 9 0 1 0 9 9h-9z" /><path d="M15 3.5A9 9 0 0 1 20.5 9H15z" /></>,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></>,
+  overview: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
+  sprintBoard: <><rect x="3" y="3" width="18" height="18" rx="2.5" /><path d="M7.5 7.5v7M12 7.5v10M16.5 7.5v4" /></>,
   undo: <path d="M9 14 4 9l5-5M4 9h11a5 5 0 0 1 0 10h-3" />,
 } satisfies Record<string, ReactNode>
 
