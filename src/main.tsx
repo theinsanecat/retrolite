@@ -9,6 +9,12 @@ import { applyTheme, savedTheme } from './lib/theme'
 // apply the saved theme before the first paint
 applyTheme(savedTheme())
 
+// remember whether the last input was a pointer or the keyboard, so focus rings
+// show for keyboard users only (see index.css)
+const setInput = (kind: 'pointer' | 'keyboard') => { document.documentElement.dataset.input = kind }
+addEventListener('pointerdown', () => setInput('pointer'), true)
+addEventListener('keydown', e => { if (!e.metaKey && !e.ctrlKey) setInput('keyboard') }, true)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ToastProvider>
