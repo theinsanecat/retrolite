@@ -236,6 +236,8 @@ export default function App() {
       </aside>
 
       <main>
+        {(error || incoming || sharing) && (
+        <div className="main-banners">
         {error && (
           <div className="banner error" role="alert">
             {error}
@@ -268,6 +270,8 @@ export default function App() {
             </div>
           </div>
         )}
+        </div>
+        )}
 
         {view === 'new' ? (
           <NewBoard boards={boards} onCreate={createFromTemplate} onCancel={boards.length ? () => setView('board') : undefined} />
@@ -296,13 +300,13 @@ export default function App() {
 
 function Empty({ onCreate, onSample }: { onCreate: () => void; onSample: () => void }) {
   return (
-    <section className="empty">
+    <section className="page"><div className="page-body"><div className="empty">
       <h1>Run your sprint retro in the browser</h1>
       <p>Boards are saved on your device in IndexedDB, work offline, and travel inside a share link. No sign-up, no server, no database.</p>
       <div className="row center">
         <Button variant="primary" icon="plus" onClick={onCreate}>Start a retro</Button>
         <Button variant="primary" icon="sparkle" onClick={onSample}>Try a sample board</Button>
       </div>
-    </section>
+    </div></div></section>
   )
 }
