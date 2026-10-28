@@ -13,8 +13,9 @@ export function NewBoard({ boards, onCreate, onCancel }: {
   const taken = isTaken(title, boards)
 
   return (
-    <section className="new-board">
-      <h1>New retro</h1>
+    <section className="new-board page">
+      <header className="page-head"><h1>New retro</h1></header>
+      <div className="page-body">
       <form onSubmit={e => { e.preventDefault(); onCreate(uniqueTitle(title, boards), template) }}>
         <label className="field">
           <span>Board name</span>
@@ -37,6 +38,7 @@ export function NewBoard({ boards, onCreate, onCancel }: {
           {onCancel && <Button variant="secondary" icon="x" onClick={onCancel}>Cancel</Button>}
         </div>
       </form>
+      </div>
     </section>
   )
 }
