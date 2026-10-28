@@ -173,8 +173,8 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
   const menuCard = byId(cards, menu?.cardId)
 
   return (
-    <section className="board">
-      <header className="board-head">
+    <section className="board page">
+      <header className="board-head page-head">
         <div className="title-wrap">
           <input
             className="title"
@@ -193,6 +193,7 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
         </div>
       </header>
 
+      <div className="page-body">
       {pick && subject && (
         <div className="banner organize" role="status">
           <span>
@@ -233,6 +234,7 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
       </div>
 
       <Actions items={board.actions} boardTitle={board.title} onChange={setActions} />
+      </div>
 
       {menu && menuCard && (
         <Menu
