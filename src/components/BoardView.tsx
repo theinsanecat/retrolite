@@ -8,6 +8,7 @@ import { Actions } from './Actions'
 import { Button } from './ui/Button'
 import { Menu, type MenuEntry } from './ui/Menu'
 import { Tooltip } from './ui/Tooltip'
+import { Icon } from './ui/Icon'
 import { useToast } from './ui/Toaster'
 
 /*
@@ -108,17 +109,17 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
     const entries: MenuEntry[] = [
       { kind: 'heading', label: 'Organize' },
       {
-        id: 'group', icon: '⤵', label: role === 'child' ? 'Move to another group…' : 'Group under a card…',
+        id: 'group', icon: 'groupUnder', label: role === 'child' ? 'Move to another group…' : 'Group under a card…',
         hint: role === 'parent' ? `Brings its ${kids} grouped card${kids === 1 ? '' : 's'} along` : 'Then click the card to group it under',
         blocked: !canGroup, onSelect: () => startPick(card.id, 'group'),
       },
     ]
-    if (role === 'child') entries.push({ id: 'out', icon: '⤴', label: 'Take out of group', hint: 'Stays in this column', onSelect: () => act(removeFromGroup(cards, card.id)) })
-    if (role === 'parent') entries.push({ id: 'ungroup', icon: '⇱', label: `Ungroup ${kids} card${kids === 1 ? '' : 's'}`, hint: kids === 1 ? 'It stays in this column, on its own' : 'They stay in this column, on their own', onSelect: () => act(ungroup(cards, card.id)) })
-    entries.push({ id: 'link', icon: '↔', label: 'Link to a related card…', hint: 'In any column', blocked: !canLink, onSelect: () => startPick(card.id, 'link') })
+    if (role === 'child') entries.push({ id: 'out', icon: 'takeOut', label: 'Take out of group', hint: 'Stays in this column', onSelect: () => act(removeFromGroup(cards, card.id)) })
+    if (role === 'parent') entries.push({ id: 'ungroup', icon: 'ungroup', label: `Ungroup ${kids} card${kids === 1 ? '' : 's'}`, hint: kids === 1 ? 'It stays in this column, on its own' : 'They stay in this column, on their own', onSelect: () => act(ungroup(cards, card.id)) })
+    entries.push({ id: 'link', icon: 'link', label: 'Link to a related card…', hint: 'In any column', blocked: !canLink, onSelect: () => startPick(card.id, 'link') })
     for (const id of links) {
       const other = byId(cards, id)!
-      entries.push({ id: `unlink-${id}`, icon: '✂', label: `Unlink “${short(other.text, 28)}”`, onSelect: () => act(unlinkCards(cards, card.id, id)) })
+      entries.push({ id: `unlink-${id}`, icon: 'unlink', label: `Unlink “${short(other.text, 28)}”`, onSelect: () => act(unlinkCards(cards, card.id, id)) })
     }
 
     const targets = columns.filter(c => c.id !== card.column)
@@ -126,7 +127,7 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
       entries.push({ kind: 'separator' }, { kind: 'heading', label: 'Move to column' })
       for (const col of targets) {
         entries.push({
-          id: `move-${col.id}`, icon: '→', label: col.title,
+          id: `move-${col.id}`, icon: 'arrowRight', label: col.title,
           hint: role === 'parent' ? `With its ${kids} grouped card${kids === 1 ? '' : 's'}` : role === 'child' ? 'Leaves its group' : undefined,
           onSelect: () => act(moveToColumn(cards, card.id, col.id, col.title)),
         })
@@ -135,9 +136,9 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
 
     entries.push(
       { kind: 'separator' },
-      { id: 'edit', icon: '✎', label: 'Edit text', onSelect: () => document.getElementById(`card-text-${card.id}`)?.focus() },
+      { id: 'edit', icon: 'pencil', label: 'Edit text', onSelect: () => document.getElementById(`card-text-${card.id}`)?.focus() },
       {
-        id: 'reset', icon: '↺', label: 'Reset votes', hint: card.votes ? `Takes back all ${card.votes}` : undefined, blocked: !card.votes,
+        id: 'reset', icon: 'reset', label: 'Reset votes', hint: card.votes ? `Takes back all ${card.votes}` : undefined, blocked: !card.votes,
         onSelect: () => {
           if (!card.votes) return toast('card.noVotes', { a: card.text })
           setCards(cards.map(c => (c.id === card.id ? { ...c, votes: 0 } : c)))
@@ -145,7 +146,7 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
         },
       },
       {
-        id: 'delete', icon: '🗑', label: 'Delete card', danger: true,
+        id: 'delete', icon: 'trash', label: 'Delete card', danger: true,
         hint: role === 'parent' ? (kids === 1 ? 'Its grouped card stays, on its own' : `Its ${kids} grouped cards stay, on their own`) : undefined,
         onSelect: () => remove(card.id),
       },
@@ -161,10 +162,10 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
     const linkBlocked = checkLink(cards, cardId, targetId)
     return [
       { kind: 'heading', label: `Dropped on “${short(target.text, 30)}”` },
-      { id: 'drop-group', icon: '⤵', label: 'Group under it', hint: target.parentId ? 'Joins its group' : undefined, blocked: !!groupBlocked, onSelect: () => act(groupUnder(cards, cardId, targetId)) },
-      { id: 'drop-link', icon: '↔', label: 'Link as related', blocked: !!linkBlocked, onSelect: () => act(linkCards(cards, cardId, targetId)) },
+      { id: 'drop-group', icon: 'groupUnder', label: 'Group under it', hint: target.parentId ? 'Joins its group' : undefined, blocked: !!groupBlocked, onSelect: () => act(groupUnder(cards, cardId, targetId)) },
+      { id: 'drop-link', icon: 'link', label: 'Link as related', blocked: !!linkBlocked, onSelect: () => act(linkCards(cards, cardId, targetId)) },
       { kind: 'separator' },
-      { id: 'drop-cancel', icon: '', label: 'Cancel', onSelect: () => {} },
+      { id: 'drop-cancel', icon: 'x', label: 'Cancel', onSelect: () => {} },
     ]
   }
 
@@ -185,10 +186,10 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
           {duplicateTitle && <small className="warn">Another board already has this name. It will get a number when you click away.</small>}
         </div>
         <div className="row">
-          <Button tip="Copy a link that carries this whole board" onClick={onShare}>Share link</Button>
-          <Button tip="Copy meeting notes as Markdown, for Slack, Jira or email" onClick={onNotes}>Copy notes</Button>
-          <Button tip="Save this board as a file: a backup, or for boards too big for a link" onClick={onDownload}>Download</Button>
-          <Button variant="tertiary" danger tip="Delete this board from this device" onClick={onDelete}>Delete</Button>
+          <Button variant="primary" icon="link" tip="Copy a link that carries this whole board" onClick={onShare}>Share link</Button>
+          <Button variant="primary" icon="notes" tip="Copy meeting notes as Markdown, for Slack, Jira or email" onClick={onNotes}>Copy notes</Button>
+          <Button variant="primary" icon="download" tip="Save this board as a file: a backup, or for boards too big for a link" onClick={onDownload}>Download</Button>
+          <Button variant="secondary" danger icon="trash" tip="Delete this board from this device" onClick={onDelete}>Delete</Button>
         </div>
       </header>
 
@@ -198,7 +199,7 @@ export function BoardView({ board, duplicateTitle, onChange, onTitleDone, onShar
             <strong>{pick.mode === 'group' ? 'Group under which card?' : 'Link to which card?'}</strong>
             <span className="text-secondary"> Click a highlighted card for “{short(subject.text)}”. Esc cancels.</span>
           </span>
-          <Button variant="tertiary" size="sm" onClick={() => setPick(undefined)}>Cancel</Button>
+          <Button variant="secondary" size="sm" icon="x" onClick={() => setPick(undefined)}>Cancel</Button>
         </div>
       )}
 
@@ -349,32 +350,32 @@ function CardItem({ card, cards, pick, dragId, menuId, highlight, onUpdate, onMe
         <div className="card-tags">
           {kids > 0 && (
             <Tooltip text={`${card.votes} vote${card.votes === 1 ? '' : 's'} here, plus ${total - card.votes} from the ${kids} grouped card${kids === 1 ? '' : 's'}`}>
-              <span className="chip" tabIndex={0}>▲ {total} in group</span>
+              <span className="chip" tabIndex={0}><Icon name="vote" size={11} />{total} in group</span>
             </Tooltip>
           )}
           {links.length > 0 && (
-            <Button variant="tertiary" size="sm" className="chip link-chip" tip="Highlight the related cards" onClick={() => onHighlight(links)}>
-              ↔ {links.length} related
+            <Button variant="tertiary" size="sm" className="chip link-chip" icon="link" tip="Highlight the related cards" onClick={() => onHighlight(links)}>
+              {links.length} related
             </Button>
           )}
         </div>
       )}
       <div className="card-foot">
         <Tooltip text="Drag onto a card to group or link, or onto a column to move">
-          <span className="handle" aria-hidden onMouseDown={() => setArmed(true)} onMouseUp={() => setArmed(false)}>⠿</span>
+          <span className="handle" aria-hidden onMouseDown={() => setArmed(true)} onMouseUp={() => setArmed(false)}><Icon name="grip" /></span>
         </Tooltip>
         <span className="spacer" />
-        <Button variant="secondary" size="sm" className="vote" label={`Vote (${card.votes})`} tip="Vote" onClick={() => onUpdate({ ...card, votes: card.votes + 1 })}>
-          ▲ {card.votes}
+        <Button variant="secondary" size="sm" className="vote" icon="vote" label={`Vote (${card.votes})`} tip="Vote" onClick={() => onUpdate({ ...card, votes: card.votes + 1 })}>
+          {card.votes}
         </Button>
         {card.votes > 0 && (
-          <Button variant="tertiary" size="sm" icon label="Take back a vote" onClick={() => onUpdate({ ...card, votes: card.votes - 1 })}>−</Button>
+          <Button variant="tertiary" size="sm" iconOnly icon="minus" label="Take back a vote" onClick={() => onUpdate({ ...card, votes: card.votes - 1 })} />
         )}
         <Button
-          variant="tertiary" size="sm" icon label="Card options"
+          variant="tertiary" size="sm" iconOnly icon="more" label="Card options"
           aria-haspopup="menu" aria-expanded={menuId === card.id}
           onClick={e => onMenu(card.id, e.currentTarget)}
-        >⋯</Button>
+        />
       </div>
       {picking && (
         <button
