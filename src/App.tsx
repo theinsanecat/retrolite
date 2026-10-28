@@ -12,6 +12,8 @@ import { today } from './components/Actions'
 import { Button, btnClass } from './components/ui/Button'
 import { Icon } from './components/ui/Icon'
 import { useToast } from './components/ui/Toaster'
+import { useConfirm } from './components/ui/Confirm'
+import { msg } from './lib/messages'
 import { ThemeSwitch } from './components/ui/ThemeSwitch'
 
 // Remove the board from the address bar as soon as it's read, so other scripts,
@@ -27,6 +29,7 @@ type View = 'board' | 'new' | 'actions'
 
 export default function App() {
   const toast = useToast()
+  const confirm = useConfirm()
   const [boards, setBoards] = useState<Board[]>([])
   const boardsRef = useRef(boards)
   useLayoutEffect(() => { boardsRef.current = boards })
@@ -111,10 +114,16 @@ export default function App() {
     }
   }
 
-  const remove = (id: string) => {
-    if (!confirm('Delete this board from this device?')) return
+  const remove = async (id: string) => {
+    const b = boardsRef.current.find(x => x.id === id)
+    if (!b) return
+    const ok = await confirm({
+      title: 'Delete this board?', danger: true, icon: 'trash', confirmLabel: 'Delete board',
+      message: msg('confirm.deleteBoard', { title: b.title, n: b.cards.length }).text,
+    })
+    if (!ok) return
     deleteBoard(id)
-    const rest = boards.filter(b => b.id !== id)
+    const rest = boardsRef.current.filter(x => x.id !== id)
     setBoards(rest)
     setActiveId(rest[0]?.id)
     toast('board.deleted')
@@ -165,8 +174,26 @@ export default function App() {
     const b = boardsRef.current.find(x => x.id === boardId)
     const a = b?.actions.find(x => x.id === actionId)
     if (!b || !a) return
-    update({ ...b, actions: b.actions.map(x => (x.id === actionId ? { ...x, done: !x.done } : x)) })
+    update({ ...b, actions: b.actions.map(x => (x.id === actionId ? { ...x, done: !x.done, doneAt: x.done ? undefined : Date.now() } : x)) })
     toast(a.done ? 'action.reopened' : 'action.done', { text: a.text }, a.done ? undefined : { action: { label: 'Undo', run: () => toggleAction(boardId, actionId) } })
+  }
+
+  /** Delete an action from the overview, after asking. */
+  const deleteAction = async (boardId: string, actionId: string) => {
+    const b = boardsRef.current.find(x => x.id === boardId)
+    const a = b?.actions.find(x => x.id === actionId)
+    if (!b || !a) return
+    const ok = await confirm({
+      title: 'Delete this action?', danger: true, icon: 'trash', confirmLabel: 'Delete',
+      message: msg('confirm.deleteAction', { text: a.text, board: b.title }).text,
+    })
+    if (!ok) return toast('action.kept', { text: a.text })
+    const index = b.actions.indexOf(a)
+    update({ ...b, actions: b.actions.filter(x => x.id !== actionId) })
+    toast('action.deleted', {}, { action: { label: 'Undo', run: () => {
+      const now = boardsRef.current.find(x => x.id === boardId)
+      if (now) update({ ...now, actions: [...now.actions.slice(0, index), a, ...now.actions.slice(index)] })
+    } } })
   }
 
   return (
@@ -245,7 +272,7 @@ export default function App() {
         {view === 'new' ? (
           <NewBoard boards={boards} onCreate={createFromTemplate} onCancel={boards.length ? () => setView('board') : undefined} />
         ) : view === 'actions' ? (
-          <OpenActions boards={boards} onToggle={toggleAction} onOpen={id => { setActiveId(id); setView('board') }} />
+          <OpenActions boards={boards} onToggle={toggleAction} onDelete={deleteAction} onOpen={id => { setActiveId(id); setView('board') }} />
         ) : active ? (
           <BoardView
             key={active.id}
