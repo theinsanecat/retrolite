@@ -69,8 +69,8 @@ export function OpenActions({ boards, onToggle, onDelete, onOpen }: {
   )
 
   return (
-    <section className="open-actions">
-      <header className="board-head">
+    <section className="open-actions page">
+      <header className="board-head page-head">
         <div>
           <h1>Open actions</h1>
           <p className="text-secondary">Everything your retros agreed to do, across {boards.length} board{boards.length === 1 ? '' : 's'}. Done actions stay below until you delete them.</p>
@@ -85,6 +85,7 @@ export function OpenActions({ boards, onToggle, onDelete, onOpen }: {
         )}
       </header>
 
+      <div className="page-body">
       <Suspense fallback={<section className="chart-box chart-loading" aria-busy="true"><div className="chart-canvas" /></section>}>
         <OwnerChart actions={openItems} selected={owner} onPickOwner={pick} />
       </Suspense>
@@ -103,6 +104,7 @@ export function OpenActions({ boards, onToggle, onDelete, onOpen }: {
           <ul>{doneRows.map(item)}</ul>
         </div>
       )}
+      </div>
     </section>
   )
 }
